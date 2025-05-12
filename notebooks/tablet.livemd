@@ -1,0 +1,109 @@
+# Tablet
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.16"},
+  {:tablet, "~> 0.1.0"}
+])
+```
+
+## Demo
+
+Tablet supports data as lists of matching maps and lists of matching keyword lists. Create some data and print it out.
+
+```elixir
+data = [
+  %{planet: "Mercury", orbital_period: 88},
+  %{planet: "Venus", orbital_period: 224.701},
+  %{planet: "Earth", orbital_period: 365.256},
+  %{planet: "Mars", orbital_period: 686.971}
+]
+
+Tablet.puts(data)
+```
+
+That's it. Tablet's main purpose is to get tabular data in a viewable state as easily as possible.
+
+The output does leave some things to be desired, so read on for how to improve it.
+
+## Getting fancier
+
+`Tablet.puts/2` takes many arguments. Let's get the columns in a better order by specifying the `:keys` option.
+
+```elixir
+Tablet.puts(data, keys: [:planet, :orbital_period])
+```
+
+Now lets get proper column headers. This is handled by passing a custom formatter function like you'd do with `Kino.DataTable.new/2`. In fact, going from `Kino.DataTable.new/2` to `Tablet.puts/2` and back is intentionally easy.
+
+```elixir
+formatter = fn
+  :__header__, :planet -> {:ok, "Planet"}
+  :__header__, :orbital_period -> {:ok, "Orbital Period"}
+  _, _ -> :default
+end
+
+Tablet.puts(data,
+  keys: [:planet, :orbital_period],
+  formatter: formatter)
+```
+
+## Styles
+
+Tablet comes with a few built-in styles and can be further configured by passing a styling function via the `:style` parameter.
+
+As an example, if you'd like to copy/paste a table to a markdown document, try out the `:markdown` style.
+
+```elixir
+Tablet.puts(data,
+  keys: [:planet, :orbital_period],
+  formatter: formatter,
+  style: :markdown
+)
+```
+
+Or try one of the other styles in the [gallery](../gallery.md):
+
+```elixir
+Tablet.puts(data,
+  keys: [:planet, :orbital_period],
+  formatter: formatter,
+  style: :ledger
+)
+```
+
+## Appendix 1: IO.ANSI.ansidata/0
+
+Tablet supports rendering to `IO.ANSI.ansidata/0` when output needs to go somewhere besides the console. This output is like `IO.chardata/0` in that it can be a list of strings and character data that the Elixir IO functions now how to reassemble. `IO.ANSI.ansidata/0` also contains atoms like `:blue` and `:underline` that get translated to ANSI escape sequences by `IO.ANSI.format/2`.
+
+In normal use, this is totally invisible, but it's good to know that it exists to avoid the surprise when you see it.
+
+Here's the above example as `IO.ANSI.ansidata/0`:
+
+```elixir
+out =
+  Tablet.render(data,
+    keys: [:planet, :orbital_period],
+    formatter: formatter
+  )
+```
+
+And here's what happens when it's formatted:
+
+```elixir
+out |> IO.ANSI.format() |> IO.write()
+```
+
+<!-- livebook:{"branch_parent_index":1} -->
+
+## Appendix 2: Kino.DataTable
+
+Try the next cell to see how `Tablet` options correspond to `Kino.DataTable` ones.
+
+```elixir
+Kino.DataTable.new(data,
+  keys: [:planet, :orbital_period],
+  formatter: formatter,
+  name: "Solar System"
+)
+```

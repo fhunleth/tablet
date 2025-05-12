@@ -1,0 +1,28 @@
+version = 1
+
+[[annotations]]
+path = [
+ ".circleci/config.yml",
+ ".formatter.exs",
+ ".credo.exs",
+ ".gitignore",
+ "CHANGELOG.md",
+ "notebooks/tablet.livemd",
+ "NOTICE",
+ "REUSE.toml",
+ "mix.exs",
+ "mix.lock"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "None"
+SPDX-License-Identifier = "CC0-1.0"
+
+[[annotations]]
+path = [
+ "assets/*",
+ "gallery.md",
+ "README.md"
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2025 Frank Hunleth"
+SPDX-License-Identifier = "CC-BY-4.0"
