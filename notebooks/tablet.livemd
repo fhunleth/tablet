@@ -62,7 +62,7 @@ Tablet.puts(data,
 )
 ```
 
-Or try one of the other styles in the [gallery](../gallery.md):
+Or try one of the other styles in the [gallery](https://hexdocs.pm/tablet/gallery.html):
 
 ```elixir
 Tablet.puts(data,
