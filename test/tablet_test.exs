@@ -118,15 +118,15 @@ defmodule TabletTest do
     expected = [
       :underline,
       ":name",
-      :reset,
+      :no_underline,
       "  ",
       :underline,
       ":age",
-      :reset,
+      :no_underline,
       "  ",
       :underline,
       ":favorite_food",
-      :reset,
+      :no_underline,
       "  \nBob    10    Spaghetti       \nSteve  11                    \nAmy    12    Grilled Cheese  \n"
     ]
 
