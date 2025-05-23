@@ -22,17 +22,17 @@ defmodule Tablet.LedgerStyleTest do
       :light_blue_background,
       :black,
       "key_1  key_2  key_3  ",
-      :reset,
+      :default_color,
       "\n",
       :light_black_background,
       :white,
       "1,1    1,2    1,3    ",
-      :reset,
+      :default_color,
       "\n",
       :white_background,
       :black,
       "2,1    2,2    2,3    ",
-      :reset,
+      :default_color,
       "\n"
     ]
 

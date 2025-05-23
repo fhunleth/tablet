@@ -21,15 +21,15 @@ defmodule Tablet.CompactStyleTest do
     expected = [
       :underline,
       "key_1",
-      :reset,
+      :no_underline,
       "  ",
       :underline,
       "key_2",
-      :reset,
+      :no_underline,
       "  ",
       :underline,
       "key_3",
-      :reset,
+      :no_underline,
       "  \n" <> "1,1    1,2    1,3    \n" <> "2,1    2,2    2,3    \n"
     ]
 

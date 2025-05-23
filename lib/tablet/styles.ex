@@ -40,14 +40,14 @@ defmodule Tablet.Styles do
   defp compact_header(table, header) do
     Enum.map(header, fn {c, v} ->
       width = table.column_widths[c]
-      [:underline, Tablet.left_trim_pad(v, width), :reset, "  "]
+      [:underline, Tablet.left_trim_pad(v, width), :no_underline, "  "]
     end)
   end
 
   defp compact_row(table, row) do
     Enum.map(row, fn {c, v} ->
       width = table.column_widths[c]
-      [Tablet.left_trim_pad(v, width), :reset, "  "]
+      Tablet.left_trim_pad(v, width + 2)
     end)
   end
 
@@ -59,16 +59,13 @@ defmodule Tablet.Styles do
   Pass `style: :markdown` to `Tablet.puts/2` or `Tablet.render/2` to use.
   """
   @spec markdown(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def markdown(table, %{line: :header}, row) do
-    flat_row = List.flatten(row)
-
+  def markdown(table, %{line: :header}, rows) do
     [
-      Enum.map(flat_row, fn {c, v} ->
-        width = table.column_widths[c]
-        ["| ", Tablet.left_trim_pad(v, width), :reset, " "]
-      end),
+      rows |> Enum.map(&markdown_row(table, &1)),
       "|\n",
-      Enum.map(flat_row, fn {c, _v} ->
+      rows
+      |> List.flatten()
+      |> Enum.map(fn {c, _v} ->
         width = table.column_widths[c]
         ["| ", String.duplicate("-", width), " "]
       end),
@@ -88,7 +85,7 @@ defmodule Tablet.Styles do
   defp markdown_row(table, row) do
     Enum.map(row, fn {c, v} ->
       width = table.column_widths[c]
-      ["| ", Tablet.left_trim_pad(v, width), :reset, " "]
+      ["| ", Tablet.left_trim_pad(v, width), " "]
     end)
   end
 
@@ -196,7 +193,7 @@ defmodule Tablet.Styles do
       |> List.flatten()
       |> Enum.map(fn {c, v} ->
         width = table.column_widths[c]
-        [" ", Tablet.left_trim_pad(v, width), :reset, " ", vertical]
+        [" ", Tablet.left_trim_pad(v, width), " ", vertical]
       end)
 
     [vertical, items, "\n"]
@@ -227,7 +224,7 @@ defmodule Tablet.Styles do
       :light_blue_background,
       :black,
       rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
-      :reset,
+      :default_color,
       "\n"
     ]
   end
@@ -236,7 +233,12 @@ defmodule Tablet.Styles do
     color =
       if rem(n, 2) == 0, do: [:white_background, :black], else: [:light_black_background, :white]
 
-    [color, rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "), :reset, "\n"]
+    [
+      color,
+      rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
+      :default_color,
+      "\n"
+    ]
   end
 
   def ledger(_table, _context, _row) do
