@@ -50,7 +50,7 @@ defmodule Gallery do
     Ctrl+L
     Sleep 10ms
     Wait /iex>/
-    Type `Tablet.puts(data, keys: keys, name: "#{style}", style: #{inspect(style)})` Enter Sleep 100ms
+    Type `Tablet.puts(data, keys: keys, name: "Planetary Orbits", style: #{inspect(style)})` Enter Sleep 100ms
     Wait /iex>/
     Screenshot assets/#{style}.png
     """

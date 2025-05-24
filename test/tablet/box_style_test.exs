@@ -31,6 +31,28 @@ defmodule Tablet.BoxStyleTest do
     assert output == expected
   end
 
+  test "title" do
+    data = generate_table(2, 3)
+
+    output =
+      Tablet.render(data, style: :box, name: "Title")
+      |> ansidata_to_string()
+
+    expected = """
+    +───────────────────────+
+    |         Title         |
+    +───────+───────+───────+
+    | key_1 | key_2 | key_3 |
+    +───────+───────+───────+
+    | 1,1   | 1,2   | 1,3   |
+    +───────+───────+───────+
+    | 2,1   | 2,2   | 2,3   |
+    +───────+───────+───────+
+    """
+
+    assert output == expected
+  end
+
   test "one row" do
     data = generate_table(1, 3)
 
@@ -93,6 +115,30 @@ defmodule Tablet.BoxStyleTest do
       |> ansidata_to_string()
 
     expected = """
+    +───────+───────+───────+───────+───────+───────+
+    | key_1 | key_2 | key_3 | key_1 | key_2 | key_3 |
+    +───────+───────+───────+───────+───────+───────+
+    | 1,1   | 1,2   | 1,3   | 4,1   | 4,2   | 4,3   |
+    +───────+───────+───────+───────+───────+───────+
+    | 2,1   | 2,2   | 2,3   | 5,1   | 5,2   | 5,3   |
+    +───────+───────+───────+───────+───────+───────+
+    | 3,1   | 3,2   | 3,3   |       |       |       |
+    +───────+───────+───────+───────+───────+───────+
+    """
+
+    assert output == expected
+  end
+
+  test "multi-column with title" do
+    data = generate_table(5, 3)
+
+    output =
+      Tablet.render(data, style: :box, name: "Title", wrap_across: 2)
+      |> ansidata_to_string()
+
+    expected = """
+    +───────────────────────────────────────────────+
+    |                     Title                     |
     +───────+───────+───────+───────+───────+───────+
     | key_1 | key_2 | key_3 | key_1 | key_2 | key_3 |
     +───────+───────+───────+───────+───────+───────+

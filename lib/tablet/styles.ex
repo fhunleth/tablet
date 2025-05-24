@@ -25,7 +25,11 @@ defmodule Tablet.Styles do
   @spec compact(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
           IO.ANSI.ansidata()
   def compact(table, %{line: :header}, rows) do
-    [rows |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse(" "), "\n"]
+    [
+      compact_title(table),
+      rows |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse(" "),
+      "\n"
+    ]
   end
 
   def compact(table, %{line: n}, rows) when is_integer(n) do
@@ -35,6 +39,13 @@ defmodule Tablet.Styles do
   def compact(_table, _context, _row) do
     # Nothing else
     []
+  end
+
+  defp compact_title(%{name: []} = _table), do: []
+
+  defp compact_title(table) do
+    w = interior_width(table, 0, 2, 3)
+    [Tablet.fit_to_width(table.name, w, :center), "\n"]
   end
 
   defp compact_header(table, header) do
@@ -61,6 +72,7 @@ defmodule Tablet.Styles do
   @spec markdown(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
   def markdown(table, %{line: :header}, rows) do
     [
+      markdown_title(table),
       rows |> Enum.map(&markdown_row(table, &1)),
       "|\n",
       rows
@@ -81,6 +93,9 @@ defmodule Tablet.Styles do
     # Nothing else
     []
   end
+
+  defp markdown_title(%{name: []} = _table), do: []
+  defp markdown_title(table), do: ["## ", table.name, "\n\n"]
 
   defp markdown_row(table, row) do
     Enum.map(row, fn {c, v} ->
@@ -171,7 +186,7 @@ defmodule Tablet.Styles do
           IO.ANSI.ansidata()
   def generic_box(table, %{line: :header, border: border}, rows) do
     [
-      generic_box_border(table, rows, border.ul, border.uc, border.ur, border.h),
+      generic_box_title(table, border, rows),
       generic_box_row(table, rows, border.v)
     ]
   end
@@ -185,6 +200,32 @@ defmodule Tablet.Styles do
 
   def generic_box(table, %{line: :footer, border: border}, row) do
     generic_box_border(table, row, border.ll, border.lc, border.lr, border.h)
+  end
+
+  defp generic_box_title(%{name: []} = table, border, rows) do
+    generic_box_border(table, rows, border.ul, border.uc, border.ur, border.h)
+  end
+
+  defp generic_box_title(table, border, rows) do
+    w = interior_width(table, 2, 1, 1)
+
+    [
+      [border.ul, String.duplicate(border.h, w), border.ur, "\n"],
+      [border.v, Tablet.fit_to_width(table.name, w, :center), border.v, "\n"],
+      generic_box_border(table, rows, border.l, border.uc, border.r, border.h)
+    ]
+  end
+
+  defp interior_width(table, cell_padding, between_cells, between_multi) do
+    num_keys = length(table.keys)
+
+    table.wrap_across *
+      (Enum.reduce(
+         table.keys,
+         0,
+         &Kernel.+(table.column_widths[&1], &2)
+       ) + cell_padding * num_keys) + table.wrap_across * (num_keys - 1) * between_cells +
+      (table.wrap_across - 1) * between_multi
   end
 
   defp generic_box_row(table, row, vertical) do
@@ -223,6 +264,7 @@ defmodule Tablet.Styles do
     [
       :light_blue_background,
       :black,
+      ledger_title(table),
       rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
       :default_background,
       :default_color,
@@ -246,6 +288,21 @@ defmodule Tablet.Styles do
   def ledger(_table, _context, _row) do
     # Nothing else
     []
+  end
+
+  defp ledger_title(%{name: []} = _table), do: []
+
+  defp ledger_title(table) do
+    w = interior_width(table, 2, 0, 1)
+
+    [
+      Tablet.fit_to_width(table.name, w, :center),
+      :default_background,
+      :default_color,
+      "\n",
+      :light_blue_background,
+      :black
+    ]
   end
 
   defp ledger_row(table, row) do
