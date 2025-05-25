@@ -543,7 +543,7 @@ defmodule Tablet do
   defp truncate_graphemes([], len, acc), do: {len, acc, nil}
 
   defp truncate_graphemes([h | t], len, acc) do
-    new_len = len - grapheme_width(h)
+    new_len = len - wcwidth(h)
 
     cond do
       new_len > 0 -> truncate_graphemes(t, new_len, [h | acc])
@@ -603,31 +603,29 @@ defmodule Tablet do
     IO.ANSI.format(ansidata, false)
     |> IO.chardata_to_string()
     |> String.graphemes()
-    |> Enum.reduce(0, fn c, acc -> acc + grapheme_width(c) end)
+    |> Enum.reduce(0, fn c, acc -> acc + wcwidth(c) end)
   end
 
-  # Simplistic width calculator for commonly seen Unicode in tables
+  # Simplistic wcwidth implementation based on https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
+  # with the addition of the 0x1f170..0x1f9ff range for emojis.
+  # This currently assumes no 0-width characters.
   # credo:disable-for-next-line Credo.Check.Refactor.CyclomaticComplexity
-  defp grapheme_width(<<cp::utf8, _::binary>>) do
-    cond do
-      # Common catch-all for many 1-wide codepoints
-      cp < 0x2000 -> 1
-      # Watch, hourglass
-      cp in 0x231A..0x231B -> 2
-      # Angle brackets
-      cp in 0x2329..0x232A -> 2
-      cp in 0x23E9..0x23EC -> 2
-      cp == 0x25B6 -> 2
-      cp == 0x25C0 -> 2
-      # Misc symbols
-      cp in 0x2600..0x27BF -> 2
-      cp in 0x2B05..0x2B07 -> 2
-      cp in 0x2934..0x2935 -> 2
-      cp == 0x1F004 -> 2
-      cp == 0x1F0CF -> 2
-      # Emoji, pictographs
-      cp in 0x1F170..0x1F9FF -> 2
-      true -> 1
-    end
-  end
+  defp wcwidth(<<ucs::utf8, _::binary>>)
+       when ucs >= 0x1100 and
+              (ucs <= 0x115F or
+                 ucs == 0x2329 or
+                 ucs == 0x232A or
+                 (ucs >= 0x2E80 and ucs <= 0xA4CF and ucs != 0x303F) or
+                 (ucs >= 0xAC00 and ucs <= 0xD7A3) or
+                 (ucs >= 0xF900 and ucs <= 0xFAFF) or
+                 (ucs >= 0xFE10 and ucs <= 0xFE19) or
+                 (ucs >= 0xFE30 and ucs <= 0xFE6F) or
+                 (ucs >= 0xFF00 and ucs <= 0xFF60) or
+                 (ucs >= 0xFFE0 and ucs <= 0xFFE6) or
+                 (ucs >= 0x1F170 and ucs <= 0x1F9FF) or
+                 (ucs >= 0x20000 and ucs <= 0x2FFFD) or
+                 (ucs >= 0x30000 and ucs <= 0x3FFFD)),
+       do: 2
+
+  defp wcwidth(_), do: 1
 end
