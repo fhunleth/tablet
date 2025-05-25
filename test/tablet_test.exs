@@ -222,4 +222,54 @@ defmodule TabletTest do
     assert Tablet.visual_length("🇫🇷") == 2
     assert Tablet.visual_length("😀 👻 🐭") == 8
   end
+
+  defp ftw(ansidata, len, justification) do
+    Tablet.fit_to_width(ansidata, len, justification) |> Tablet.simplify()
+  end
+
+  describe "fit_to_width/3" do
+    test "string trims" do
+      assert ftw("Hello", 5, :left) == ["Hello"]
+      assert ftw("Hello", 4, :left) == ["Hel…"]
+      assert ftw("Hello", 2, :left) == ["H…"]
+      assert ftw("Hello", 1, :left) == ["…"]
+      assert ftw("Hello", 0, :left) == []
+      assert ftw("José", 3, :left) == ["Jo…"]
+    end
+
+    test "unicode trims" do
+      assert ftw("😀 👻 🐭", 8, :left) == ["😀 👻 🐭"]
+      assert ftw("😀 👻 🐭", 7, :left) == ["😀 👻 …"]
+      assert ftw("😀 👻 🐭", 1, :left) == ["…"]
+      assert ftw("😀 👻 🐭", 0, :left) == []
+    end
+
+    test "ansidata trims" do
+      s = [:red, "He", "l", [:green | "lo"]]
+      assert ftw(s, 5, :left) == [:red, "Hel", :green, "lo"]
+      assert ftw(s, 4, :left) == [:red, "Hel", :green, "…"]
+      assert ftw(s, 3, :left) == [:red, "He…", :green]
+      assert ftw(s, 2, :left) == [:red, "H…", :green]
+      assert ftw(s, 1, :left) == [:red, "…", :green]
+      assert ftw(s, 0, :left) == [:red, :green]
+    end
+
+    test "left justifies" do
+      assert ftw("Hello", 10, :left) == ["Hello     "]
+      assert ftw("José", 10, :left) == ["José      "]
+      assert ftw("😀 👻 🐭", 10, :left) == ["😀 👻 🐭  "]
+    end
+
+    test "right justifies" do
+      assert ftw("Hello", 10, :right) == ["     Hello"]
+      assert ftw("José", 10, :right) == ["      José"]
+      assert ftw("😀 👻 🐭", 10, :right) == ["  😀 👻 🐭"]
+    end
+
+    test "center justifies" do
+      assert ftw("Hello", 10, :center) == ["  Hello   "]
+      assert ftw("José", 10, :center) == ["   José   "]
+      assert ftw("😀 👻 🐭", 10, :center) == [" 😀 👻 🐭 "]
+    end
+  end
 end

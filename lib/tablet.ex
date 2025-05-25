@@ -196,6 +196,11 @@ defmodule Tablet do
   @type formatter() :: (key(), any() -> {:ok, IO.ANSI.ansidata()} | :default)
 
   @typedoc """
+  Justification for padding ansidata
+  """
+  @type justification() :: :left | :right | :center
+
+  @typedoc """
   Table renderer state
 
   Fields:
@@ -457,20 +462,76 @@ defmodule Tablet do
   defp default_format(_id, data) when is_tuple(data), do: inspect(data)
 
   @doc """
-  Trim or pad ansidata
+  Fit ansidata into the specified number of characters
 
   This function is useful for styling output to fit data into a cell.
   """
-  @spec left_trim_pad(IO.ANSI.ansidata(), pos_integer()) :: IO.ANSI.ansidata()
-  def left_trim_pad(ansidata, len) do
-    padding = len - visual_length(ansidata)
+  @spec fit_to_width(IO.ANSI.ansidata(), pos_integer(), justification()) :: IO.ANSI.ansidata()
+  def fit_to_width(ansidata, len, justification) do
+    {trimmed, excess} = ansidata |> flatten() |> truncate(len, [])
+    pad(trimmed, excess, justification)
+  end
+
+  # Flatten ansidata to a list of strings and ANSI codes
+  defp flatten(ansidata), do: flatten(ansidata, []) |> Enum.reverse()
+  defp flatten([], acc), do: acc
+  defp flatten([h | t], acc), do: flatten(t, flatten(h, acc))
+  defp flatten(a, acc), do: [a | acc]
+
+  # Truncate flattened ansidata and add ellipsis if needed
+  defp truncate([], len, acc), do: {Enum.reverse(acc), len}
+  defp truncate([s | t], 0, acc) when is_binary(s), do: truncate(t, 0, acc)
+  defp truncate([s | t], 0, acc), do: truncate(t, 0, [s | acc])
+
+  defp truncate([s | t], len, acc) when is_binary(s) do
+    {len, s, maybe} = truncate_graphemes(s, len)
 
     cond do
-      padding > 0 -> [ansidata, :binary.copy(" ", padding)]
-      padding == 0 -> ansidata
-      padding < 0 -> [ansidata, :binary.copy("\b", -padding + 1), "…"]
+      len > 0 or maybe == nil -> truncate(t, len, [s | acc])
+      more_chars?(t) -> truncate(t, 0, ["…", s | acc])
+      true -> truncate(t, 0, [maybe, s | acc])
     end
   end
+
+  defp truncate([s | t], len, acc), do: truncate(t, len, [s | acc])
+
+  # Truncating strings requires handling variable width graphemes
+  # This returns the new remaining length, the truncated string, and if the string
+  # fits perfectly, the last grapheme. The last grapheme might be replaced with an
+  # ellipsis or not depending on whether there are more characters.
+  defp truncate_graphemes(s, len) do
+    {new_len, result, maybe} = truncate_graphemes(String.graphemes(s), len, [])
+    {new_len, result |> Enum.reverse() |> Enum.join(), maybe}
+  end
+
+  defp truncate_graphemes([], len, acc), do: {len, acc, nil}
+
+  defp truncate_graphemes([h | t], len, acc) do
+    new_len = len - grapheme_width(h)
+
+    cond do
+      new_len > 0 -> truncate_graphemes(t, new_len, [h | acc])
+      new_len == 0 and t == [] -> {0, acc, h}
+      true -> {len - 1, ["…" | acc], nil}
+    end
+  end
+
+  # Check if there are more characters (not ANSI codes)
+  defp more_chars?([h | _]) when is_binary(h), do: h != ""
+  defp more_chars?([_ | t]), do: more_chars?(t)
+  defp more_chars?([]), do: false
+
+  # Apply padding
+  defp pad(ansidata, 0, _justification), do: ansidata
+  defp pad(ansidata, len, :left), do: [ansidata, padding(len)]
+  defp pad(ansidata, len, :right), do: [padding(len), ansidata]
+
+  defp pad(ansidata, len, :center) do
+    left = div(len, 2)
+    [padding(left), ansidata, padding(len - left)]
+  end
+
+  defp padding(len), do: :binary.copy(" ", len)
 
   @doc """
   Convenience function for simplifying ansidata
@@ -480,12 +541,8 @@ defmodule Tablet do
   """
   @spec simplify(IO.ANSI.ansidata()) :: IO.ANSI.ansidata()
   def simplify(ansidata) do
-    ansidata |> simplify([]) |> Enum.reverse() |> merge_ansi(:reset) |> merge_text("")
+    ansidata |> flatten() |> merge_ansi(:reset) |> merge_text("")
   end
-
-  defp simplify([], acc), do: acc
-  defp simplify([h | t], acc), do: simplify(t, simplify(h, acc))
-  defp simplify(b, acc), do: [b | acc]
 
   defp merge_ansi([last_ansi | t], last_ansi), do: merge_ansi(t, last_ansi)
   defp merge_ansi([h | t], _last_ansi) when is_atom(h), do: [h | merge_ansi(t, h)]
