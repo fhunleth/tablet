@@ -21,17 +21,20 @@ defmodule Tablet.LedgerStyleTest do
     expected = [
       :light_blue_background,
       :black,
-      "key_1  key_2  key_3  ",
+      " key_1  key_2  key_3 ",
+      :default_background,
       :default_color,
       "\n",
       :light_black_background,
       :white,
-      "1,1    1,2    1,3    ",
+      " 1,1    1,2    1,3   ",
+      :default_background,
       :default_color,
       "\n",
       :white_background,
       :black,
-      "2,1    2,2    2,3    ",
+      " 2,1    2,2    2,3   ",
+      :default_background,
       :default_color,
       "\n"
     ]
@@ -47,8 +50,8 @@ defmodule Tablet.LedgerStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1  key_2  key_3
-    1,1    1,2    1,3
+     key_1  key_2  key_3
+     1,1    1,2    1,3
     """
 
     assert output == expected
@@ -62,10 +65,10 @@ defmodule Tablet.LedgerStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1
-    1,1
-    2,1
-    3,1
+     key_1
+     1,1
+     2,1
+     3,1
     """
 
     assert output == expected
@@ -77,7 +80,7 @@ defmodule Tablet.LedgerStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1
+     key_1
     """
 
     assert output == expected
@@ -91,10 +94,10 @@ defmodule Tablet.LedgerStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1  key_2  key_3   key_1  key_2  key_3
-    1,1    1,2    1,3     4,1    4,2    4,3
-    2,1    2,2    2,3     5,1    5,2    5,3
-    3,1    3,2    3,3
+     key_1  key_2  key_3   key_1  key_2  key_3
+     1,1    1,2    1,3     4,1    4,2    4,3
+     2,1    2,2    2,3     5,1    5,2    5,3
+     3,1    3,2    3,3
     """
 
     assert output == expected

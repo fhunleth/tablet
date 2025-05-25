@@ -224,6 +224,7 @@ defmodule Tablet.Styles do
       :light_blue_background,
       :black,
       rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
+      :default_background,
       :default_color,
       "\n"
     ]
@@ -236,6 +237,7 @@ defmodule Tablet.Styles do
     [
       color,
       rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
+      :default_background,
       :default_color,
       "\n"
     ]
@@ -249,7 +251,7 @@ defmodule Tablet.Styles do
   defp ledger_row(table, row) do
     Enum.map(row, fn {c, v} ->
       width = table.column_widths[c]
-      [Tablet.left_trim_pad(v, width), "  "]
+      [" ", Tablet.left_trim_pad(v, width), " "]
     end)
   end
 end
