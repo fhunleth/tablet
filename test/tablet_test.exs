@@ -207,6 +207,77 @@ defmodule TabletTest do
     assert output == expected
   end
 
+  describe "compute_column_widths/2" do
+    test "fixed default width" do
+      data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz"}]
+      widths = Tablet.compute_column_widths(data, default_column_width: 10)
+      assert widths == %{id: 10, name: 10}
+    end
+
+    test "exact fit" do
+      data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz"}]
+      widths = Tablet.compute_column_widths(data, default_column_width: :minimum)
+      assert widths == %{id: 3, name: 26}
+    end
+
+    test "expand one" do
+      data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz"}]
+
+      widths =
+        Tablet.compute_column_widths(data,
+          column_widths: %{id: :minimum, name: :expand},
+          total_width: 80
+        )
+
+      # compact style uses 2 spaces between columns so 3 + 75 + 2 = 80
+      assert widths == %{id: 3, name: 75}
+    end
+
+    test "expand two" do
+      data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz"}]
+
+      widths =
+        Tablet.compute_column_widths(data,
+          default_column_width: :expand,
+          total_width: 80
+        )
+
+      # compact style uses 2 spaces between columns so 39 + 39 + 2 = 80
+      assert widths == %{id: 39, name: 39}
+    end
+
+    test "expand three" do
+      data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz", age: 30}]
+
+      widths =
+        Tablet.compute_column_widths(data,
+          keys: [:id, :name, :age],
+          default_column_width: :expand,
+          total_width: 80
+        )
+
+      # compact style uses 2 spaces between columns so 25+25+26+2+2 = 80
+      assert widths == %{id: 25, name: 25, age: 26}
+    end
+
+    test "multicolumn expand three" do
+      data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz", age: 30}]
+
+      widths =
+        Tablet.compute_column_widths(data,
+          keys: [:id, :name, :age],
+          default_column_width: :expand,
+          wrap_across: 3,
+          total_width: 80
+        )
+
+      # compact style uses 2 spaces between columns so 3 * (7+7+7+2+2) + 2 + 2 = 79
+      # 79 is the best we can do with multiple columns since there's no way to say
+      # that the 3rd run of all of the columns should have a different set of widths.
+      assert widths == %{id: 7, name: 7, age: 7}
+    end
+  end
+
   test "simplify/1" do
     assert Tablet.simplify("hello") == ["hello"]
     assert Tablet.simplify(["hello", " world"]) == ["hello world"]

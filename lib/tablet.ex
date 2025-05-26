@@ -238,6 +238,11 @@ defmodule Tablet do
             total_width: 0,
             wrap_across: 1
 
+  # These are used in the cell expansion calculations. THey're hardcoded to compact style
+  # values, but could be figured out by probing the style function.
+  @style_intra_padding 2
+  @style_multi_column_padding 2
+
   @doc """
   Print a table to the console
 
@@ -280,6 +285,25 @@ defmodule Tablet do
   def render(data, options \\ []) do
     new([{:data, data} | options])
     |> to_ansidata()
+  end
+
+  @doc """
+  Compute column widths
+
+  This function is useful if you need to render more than one table
+  with the same keys and want column widths to stay the same. It
+  takes the same options as `render/2`. It returns a fully resolved
+  version of the `:column_widths` option that can be passed to
+  future calls to `render/2` and `puts/2`.
+  """
+  @spec compute_column_widths(data(), keyword()) :: %{key() => pos_integer()}
+  def compute_column_widths(data, options \\ []) do
+    table =
+      new([{:data, data} | options])
+      |> fill_in_keys()
+      |> calculate_column_widths()
+
+    table.column_widths
   end
 
   defp new(options) do
@@ -350,18 +374,27 @@ defmodule Tablet do
     if expanded_count > 0 do
       wrap_across = table.wrap_across
       non_expanded_width = non_expanded_widths |> Enum.map(&pre_expand_width/1) |> Enum.sum()
-      guessed_padding = (length(table.keys) - 1) * 2
-      guessed_width = wrap_across * (non_expanded_width + guessed_padding) + wrap_across - 1
+      guessed_padding = (length(table.keys) - 1) * @style_intra_padding
+
+      guessed_width =
+        wrap_across * (non_expanded_width + guessed_padding) +
+          @style_multi_column_padding * (wrap_across - 1)
+
       total_width = if table.total_width > 0, do: table.total_width, else: terminal_width()
 
       # Make sure the columns don't go below 0
       expansion = max(expanded_count * wrap_across, total_width - guessed_width)
       expansion_each = div(expansion, expanded_count * wrap_across)
+      leftover = rem(expansion, expanded_count * wrap_across) |> div(wrap_across)
+      last_expansion = final_expansion(non_expanded_widths)
 
       new_columns_widths =
-        Enum.map(non_expanded_widths, &update_expansion_column(&1, expansion_each))
+        non_expanded_widths
+        |> Enum.map(&update_expansion_column(&1, expansion_each))
+        |> Map.new()
+        |> Map.put(last_expansion, expansion_each + leftover)
 
-      %{table | column_widths: Map.new(new_columns_widths)}
+      %{table | column_widths: new_columns_widths}
     else
       %{table | column_widths: Map.new(non_expanded_widths)}
     end
@@ -385,6 +418,9 @@ defmodule Tablet do
 
   defp update_expansion_column({k, :expand}, w), do: {k, w}
   defp update_expansion_column(other, _w), do: other
+
+  defp final_expansion(widths),
+    do: widths |> Enum.reverse() |> Enum.find_value(fn {k, w} -> if w == :expand, do: k end)
 
   defp terminal_width() do
     case :io.columns() do
