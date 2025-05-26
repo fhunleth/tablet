@@ -27,13 +27,13 @@ defmodule Tablet.Styles do
   def compact(table, %{line: :header}, rows) do
     [
       compact_title(table),
-      rows |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse(" "),
+      rows |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse("   "),
       "\n"
     ]
   end
 
   def compact(table, %{line: n}, rows) when is_integer(n) do
-    [rows |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse(" "), "\n"]
+    [rows |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
   end
 
   def compact(_table, _context, _row) do
@@ -49,17 +49,18 @@ defmodule Tablet.Styles do
   end
 
   defp compact_header(table, header) do
-    Enum.map(header, fn {c, v} ->
+    header
+    |> Enum.map(fn {c, v} ->
       width = table.column_widths[c]
-      [:underline, Tablet.fit_to_width(v, width, :left), :no_underline, "  "]
+      [:underline, Tablet.fit_to_width(v, width, :left), :no_underline]
     end)
+    |> Enum.intersperse("  ")
   end
 
   defp compact_row(table, row) do
-    Enum.map(row, fn {c, v} ->
-      width = table.column_widths[c]
-      Tablet.fit_to_width(v, width + 2, :left)
-    end)
+    row
+    |> Enum.map(fn {c, v} -> Tablet.fit_to_width(v, table.column_widths[c], :left) end)
+    |> Enum.intersperse("  ")
   end
 
   @doc """

@@ -127,7 +127,7 @@ defmodule TabletTest do
       :underline,
       ":favorite_food",
       :no_underline,
-      "  \nBob    10    Spaghetti       \nSteve  11                    \nAmy    12    Grilled Cheese  \n"
+      "\nBob    10    Spaghetti     \nSteve  11                  \nAmy    12    Grilled Cheese\n"
     ]
 
     assert output == expected
