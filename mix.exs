@@ -1,7 +1,7 @@
 defmodule Tablet.MixProject do
   use Mix.Project
 
-  @version "0.1.0"
+  @version "0.2.0"
   @description "A tiny tabular table renderer"
   @source_url "https://github.com/fhunleth/tablet"
 
@@ -54,6 +54,7 @@ defmodule Tablet.MixProject do
       licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => @source_url,
+        "Changelog" => "#{@source_url}/blob/main/CHANGELOG.md",
         "REUSE Compliance" => "https://api.reuse.software/info/github.com/fhunleth/tablet"
       }
     }
