@@ -73,11 +73,11 @@ iex> formatter = fn
 iex> Tablet.render(data, keys: [:planet, :orbital_period], formatter: formatter)
 ...>    |> IO.ANSI.format(false)
 ...>    |> IO.chardata_to_string()
-"Planet   Orbital Period  \n" <>
-"Mercury  88 days         \n" <>
-"Venus    224.701 days    \n" <>
-"Earth    365.256 days    \n" <>
-"Mars     686.971 days    \n"
+"Planet   Orbital Period\n" <>
+"Mercury  88 days       \n" <>
+"Venus    224.701 days  \n" <>
+"Earth    365.256 days  \n" <>
+"Mars     686.971 days  \n"
 ```
 
 Note that normally you'd call `IO.ANSI.format/2` without passing `false` to
