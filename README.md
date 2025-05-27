@@ -37,12 +37,12 @@ fancier tables with colors, borders and more.
 
 Here are some of Tablet's features:
 
-* `Kino.DataTable`-inspired API for ease of switching between Livebook and console output
+* [`Kino.DataTable`](https://hexdocs.pm/kino/Kino.DataTable.html)-inspired API for ease of switching between Livebook and console output
 * Small. No runtime dependencies. Intentionally minimal feature scope.
 * Emoji and CJK character width calculations w/o external dependencies
 * Multi-column wrapping for tables with many rows and few columns
 * Built-in [styles](gallery.md) and optional callback interface for customization
-* Embraces `t:IO.ANSI.ansidata/0`. Allows decision for ANSI code insertion to be deferred or extended.
+* Embraces [`IO.ANSI.ansidata`](https://hexdocs.pm/elixir/IO.ANSI.html#format/1). Allows decision for ANSI code insertion to be deferred or extended.
 
 [![Run in Livebook](https://livebook.dev/badge/v1/pink.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Ffhunleth%2Ftablet%2Fblob%2Fmain%2Fnotebooks%2Ftablet.livemd)
 
