@@ -27,12 +27,16 @@ defmodule TestUtilities do
 
   defp key(c, :ascii), do: "key_#{c}"
   defp key(c, :unicode), do: "キー_#{c}"
+  defp key(c, :multiline), do: key(c, :ascii)
 
   @ascii_words {"Alpha", "Bravo", "Charlie", "Delta", "Echo"}
   @unicode_words {"りんご 🍎", "Plátano 🍌", "체리 🍒", "枣子 🌴", "Sureau 🍇"}
+  @multiline_words {"Single line", "Two\nline", "A\nthree\nline value", "Fruit emojis\n🍎🍌🍒🌴🍇",
+                    "こんにちは\nHello"}
 
   defp value(r, c, :ascii), do: tuple_index(@ascii_words, r + c)
   defp value(r, c, :unicode), do: tuple_index(@unicode_words, r + c)
+  defp value(r, c, :multiline), do: tuple_index(@multiline_words, r + c)
 
   defp tuple_index(tuple, index), do: elem(tuple, rem(index, tuple_size(tuple)))
 

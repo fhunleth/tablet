@@ -139,4 +139,26 @@ defmodule Tablet.CompactStyleTest do
 
     assert output == expected
   end
+
+  test "multi-line cells" do
+    data = generate_table(3, 3, :multiline)
+
+    output =
+      Tablet.render(data, name: "Multi-line cells", style: :compact)
+      |> ansidata_to_string()
+
+    expected = """
+               Multi-line cells
+    key_1         key_2         key_3
+    A             Fruit emojis  こんにちは
+     three         🍎🍌🍒🌴🍇    Hello
+     line value
+    Fruit emojis  こんにちは    Single line
+     🍎🍌🍒🌴🍇    Hello
+    こんにちは    Single line   Two
+     Hello                       line
+    """
+
+    assert output == expected
+  end
 end

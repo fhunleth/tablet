@@ -176,4 +176,24 @@ defmodule Tablet.MarkdownStyleTest do
 
     assert output == expected
   end
+
+  test "multi-line cells" do
+    data = generate_table(3, 3, :multiline)
+
+    output =
+      Tablet.render(data, name: "Multi-line cells", style: :markdown)
+      |> ansidata_to_string()
+
+    expected = """
+    ## Multi-line cells
+
+    | key_1                      | key_2                      | key_3               |
+    | -------------------------- | -------------------------- | ------------------- |
+    | A<br>three<br>line value   | Fruit emojis<br>🍎🍌🍒🌴🍇 | こんにちは<br>Hello |
+    | Fruit emojis<br>🍎🍌🍒🌴🍇 | こんにちは<br>Hello        | Single line         |
+    | こんにちは<br>Hello        | Single line                | Two<br>line         |
+    """
+
+    assert output == expected
+  end
 end

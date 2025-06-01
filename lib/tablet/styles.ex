@@ -35,8 +35,9 @@ defmodule Tablet.Styles do
     ]
   end
 
-  defp compact_line(table, %{section: :body}, content) do
-    [content |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
+  defp compact_line(_table, %{section: :body, slice: slice}, content) do
+    # 2 spaces between columns; 3 spaces between multi-column rows
+    [content |> Enum.map(&compact_row(&1, slice)) |> Enum.intersperse("   "), "\n"]
   end
 
   defp compact_line(_table, _context, _row) do
@@ -44,32 +45,30 @@ defmodule Tablet.Styles do
     []
   end
 
+  defp compact_row([h], 0), do: [h]
+  defp compact_row([h | t], 0), do: [h, "  " | compact_row(t, 0)]
+  defp compact_row([h], _slice), do: [" ", h]
+  defp compact_row([h | t], slice), do: [" ", h, " " | compact_row(t, slice)]
+  defp compact_row([], _slice), do: []
+
   defp compact_title(%{name: []} = _table), do: []
 
   defp compact_title(table) do
     w = interior_width(table, 0, 2, 3)
-    [Tablet.fit_to_width(table.name, w, :center), "\n"]
+    [Tablet.fit(table.name, {w, 1}, :center), "\n"]
   end
 
-  defp compact_header(table, header) do
+  defp compact_header(_table, header) do
     header
-    |> Enum.map(fn {c, v} ->
-      width = table.column_widths[c]
-      [:underline, Tablet.fit_to_width(v, width, :left), :no_underline]
-    end)
-    |> Enum.intersperse("  ")
-  end
-
-  defp compact_row(table, row) do
-    row
-    |> Enum.map(fn {c, v} -> Tablet.fit_to_width(v, table.column_widths[c], :left) end)
+    |> Enum.map(fn v -> [:underline, v, :no_underline] end)
     |> Enum.intersperse("  ")
   end
 
   @doc """
   Markdown table style
 
-  Render tabular data as a GitHub-flavored markdown table.
+  Render tabular data as a GitHub-flavored markdown table. Multi-line cells
+  have their newlines replaced with `<br>` tags.
 
   Pass `style: :markdown` to `Tablet.puts/2` or `Tablet.render/2` to use.
   """
@@ -78,27 +77,35 @@ defmodule Tablet.Styles do
     %{
       table
       | style_padding: %{edge: 4, cell: 3, multi_column: 3},
-        line_renderer: &markdown_line/3
+        line_renderer: &markdown_line/3,
+        formatter: &markdown_formatter(table.formatter, &1, &2)
     }
   end
+
+  defp markdown_formatter(original, key, value) do
+    text =
+      case original.(key, value) do
+        {:ok, ansidata} -> ansidata
+        :default -> Tablet.default_format(key, value)
+      end
+
+    {:ok, replace_new_lines(text)}
+  end
+
+  defp replace_new_lines(value) when is_binary(value), do: String.replace(value, "\n", "<br>")
+  defp replace_new_lines([]), do: []
+  defp replace_new_lines([h | t]), do: [replace_new_lines(h) | replace_new_lines(t)]
 
   defp markdown_line(table, %{section: :header}, content) do
     [
       markdown_title(table),
-      content |> Enum.map(&markdown_row(table, &1)),
-      "|\n",
-      content
-      |> List.flatten()
-      |> Enum.map(fn {c, _v} ->
-        width = table.column_widths[c]
-        ["| ", String.duplicate("-", width), " "]
-      end),
-      "|\n"
+      [content |> Enum.map(&markdown_row/1), "|\n"],
+      [content |> Enum.map(&markdown_separator/1), "|\n"]
     ]
   end
 
-  defp markdown_line(table, %{section: :body}, content) do
-    [content |> Enum.map(&markdown_row(table, &1)), "|\n"]
+  defp markdown_line(_table, %{section: :body}, content) do
+    [content |> Enum.map(&markdown_row/1), "|\n"]
   end
 
   defp markdown_line(_table, _context, _row) do
@@ -109,11 +116,15 @@ defmodule Tablet.Styles do
   defp markdown_title(%{name: []} = _table), do: []
   defp markdown_title(table), do: ["## ", table.name, "\n\n"]
 
-  defp markdown_row(table, row) do
-    Enum.map(row, fn {c, v} ->
-      width = table.column_widths[c]
-      ["| ", Tablet.fit_to_width(v, width, :left), " "]
+  defp markdown_separator(row) do
+    Enum.map(row, fn v ->
+      {width, _} = Tablet.visual_size(v)
+      ["| ", String.duplicate("-", width), " "]
     end)
+  end
+
+  defp markdown_row(row) do
+    Enum.map(row, fn v -> ["| ", v, " "] end)
   end
 
   @doc """
@@ -206,11 +217,15 @@ defmodule Tablet.Styles do
     ]
   end
 
-  defp generic_box_line(table, %{section: :body}, content, border) do
+  defp generic_box_line(table, %{section: :body, slice: 0}, content, border) do
     [
       generic_box_border(table, content, border.l, border.c, border.r, border.h),
       generic_box_row(table, content, border.v)
     ]
+  end
+
+  defp generic_box_line(table, %{section: :body}, content, border) do
+    generic_box_row(table, content, border.v)
   end
 
   defp generic_box_line(table, %{section: :footer}, row, border) do
@@ -226,7 +241,7 @@ defmodule Tablet.Styles do
 
     [
       [border.ul, String.duplicate(border.h, w), border.ur, "\n"],
-      [border.v, Tablet.fit_to_width(table.name, w, :center), border.v, "\n"],
+      [border.v, Tablet.fit(table.name, {w, 1}, :center), border.v, "\n"],
       generic_box_border(table, content, border.l, border.uc, border.r, border.h)
     ]
   end
@@ -243,28 +258,25 @@ defmodule Tablet.Styles do
       (table.wrap_across - 1) * between_multi
   end
 
-  defp generic_box_row(table, row, vertical) do
-    items =
-      row
-      |> List.flatten()
-      |> Enum.map(fn {c, v} ->
-        width = table.column_widths[c]
-        [" ", Tablet.fit_to_width(v, width, :left), " ", vertical]
-      end)
-
-    [vertical, items, "\n"]
+  defp generic_box_row(_table, rows, vertical) do
+    [vertical, Enum.map(rows, &generic_box_row_set(&1, vertical)), "\n"]
   end
 
-  defp generic_box_border(table, row, left_char, middle_char, right_char, line_char) do
-    lines =
-      row
-      |> List.flatten()
-      |> Enum.map(fn {c, _v} ->
-        width = table.column_widths[c]
-        [String.duplicate(line_char, width + 2)]
-      end)
+  defp generic_box_row_set(row, vertical) do
+    Enum.map(row, fn v -> [" ", v, " ", vertical] end)
+  end
+
+  defp generic_box_border(_table, row, left_char, middle_char, right_char, line_char) do
+    lines = Enum.flat_map(row, &generic_box_border_set(&1, line_char))
 
     [left_char, Enum.intersperse(lines, middle_char), right_char, "\n"]
+  end
+
+  defp generic_box_border_set(row, line_char) do
+    Enum.map(row, fn v ->
+      {width, _} = Tablet.visual_size(v)
+      [String.duplicate(line_char, width + 2)]
+    end)
   end
 
   @doc """
@@ -315,7 +327,7 @@ defmodule Tablet.Styles do
     w = interior_width(table, 2, 0, 1)
 
     [
-      Tablet.fit_to_width(table.name, w, :center),
+      Tablet.fit(table.name, {w, 1}, :center),
       :default_background,
       :default_color,
       "\n",
@@ -324,10 +336,7 @@ defmodule Tablet.Styles do
     ]
   end
 
-  defp ledger_row(table, row) do
-    Enum.map(row, fn {c, v} ->
-      width = table.column_widths[c]
-      [" ", Tablet.fit_to_width(v, width, :left), " "]
-    end)
+  defp ledger_row(_table, row) do
+    Enum.map(row, fn v -> [" ", v, " "] end)
   end
 end

@@ -116,6 +116,8 @@ defmodule TabletTest do
     assert_raise ArgumentError, fn -> Tablet.render(data, column_widths: 123) end
     assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: :default) end
     assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: -1) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, default_row_height: :hello) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, default_row_height: 0) end
     assert_raise ArgumentError, fn -> Tablet.render(data, formatter: "nope") end
     assert_raise ArgumentError, fn -> Tablet.render(data, keys: 1) end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: "yolo") end
@@ -273,6 +275,51 @@ defmodule TabletTest do
     assert output == expected
   end
 
+  test "fixed height rows" do
+    data = generate_table(3, 5)
+
+    output =
+      Tablet.render(data, default_row_height: 2)
+      |> ansidata_to_string()
+
+    expected = """
+    key_1    key_2  key_3  key_4    key_5
+    Charlie  Delta  Echo   Alpha    Bravo
+
+    Delta    Echo   Alpha  Bravo    Charlie
+
+    Echo     Alpha  Bravo  Charlie  Delta
+
+    """
+
+    assert output == expected
+  end
+
+  test "various height rows" do
+    data = [
+      %{key: "a", value: "one line"},
+      %{key: "b", value: "two\nlines"},
+      %{key: "c", value: "three\nlines\nhere"}
+    ]
+
+    output =
+      Tablet.render(data)
+      |> ansidata_to_string()
+
+    # Note that 2nd and later lines are indented by 1 space
+    expected = """
+    :key  :value
+    a     one line
+    b     two
+           lines
+    c     three
+           lines
+           here
+    """
+
+    assert output == expected
+  end
+
   describe "compute_column_widths/2" do
     test "fixed default width" do
       data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz"}]
@@ -353,68 +400,118 @@ defmodule TabletTest do
     assert Tablet.simplify([:red, :red, ~c"hello", :reset]) == [:red, "hello", :reset]
   end
 
-  test "visual_length/1" do
-    assert Tablet.visual_length("Hello") == 5
-    assert Tablet.visual_length("") == 0
-    assert Tablet.visual_length("José") == 4
-    assert Tablet.visual_length("🇫🇷") == 2
-    assert Tablet.visual_length("😀 👻 🐭") == 8
-  end
-
-  defp ftw(ansidata, len, justification) do
-    Tablet.fit_to_width(ansidata, len, justification) |> Tablet.simplify()
-  end
-
-  describe "fit_to_width/3" do
-    test "string trims" do
-      assert ftw("Hello", 5, :left) == ["Hello"]
-      assert ftw("Hello", 4, :left) == ["Hel…"]
-      assert ftw("Hello", 2, :left) == ["H…"]
-      assert ftw("Hello", 1, :left) == ["…"]
-      assert ftw("Hello", 0, :left) == []
-      assert ftw("José", 3, :left) == ["Jo…"]
+  describe "visual_size/1" do
+    test "one liners" do
+      assert Tablet.visual_size("Hello") == {5, 1}
+      assert Tablet.visual_size("José") == {4, 1}
     end
 
-    test "unicode trims" do
-      assert ftw("😀 👻 🐭", 8, :left) == ["😀 👻 🐭"]
-      assert ftw("😀 👻 🐭", 7, :left) == ["😀 👻 …"]
-      assert ftw("😀 👻 🐭", 1, :left) == ["…"]
-      assert ftw("😀 👻 🐭", 0, :left) == []
+    test "emojis" do
+      assert Tablet.visual_size("🇫🇷") == {2, 1}
+      assert Tablet.visual_size("😀 👻 🐭") == {8, 1}
+      assert Tablet.visual_size("♔♕♖♗♘♙") == {6, 1}
     end
 
-    test "ansidata trims" do
+    test "cjk strings" do
+      assert Tablet.visual_size("你好") == {4, 1}
+      assert Tablet.visual_size("こんにちは") == {10, 1}
+      assert Tablet.visual_size("안녕하세요") == {10, 1}
+    end
+
+    test "empty string" do
+      assert Tablet.visual_size("") == {0, 1}
+    end
+
+    test "single line with ansi data" do
+      assert Tablet.visual_size([:red, "Hello", :reset]) == {5, 1}
+      assert Tablet.visual_size([:red, "Hello", :green, " World", :reset]) == {11, 1}
+      assert Tablet.visual_size([:red, "Hello", :reset]) == {5, 1}
+      assert Tablet.visual_size([:red, "José", :reset]) == {4, 1}
+    end
+
+    test "multi-line" do
+      assert Tablet.visual_size("Hello\nWorld") == {5, 2}
+      assert Tablet.visual_size("Hello\nJosé") == {5, 2}
+      assert Tablet.visual_size("😀 👻\n😀 👻 🐭") == {8, 2}
+    end
+
+    test "multiple lines with ansi data" do
+      assert Tablet.visual_size([:red, "Hello", :reset, "\n", :green, "World"]) == {5, 2}
+    end
+  end
+
+  defp fit(ansidata, size, justification) when is_tuple(size) do
+    Tablet.fit(ansidata, size, justification) |> Enum.map(&Tablet.simplify/1)
+  end
+
+  describe "fit/3" do
+    test "one-line string trims" do
+      assert fit("Hello", {5, 1}, :left) == [["Hello"]]
+      assert fit("Hello", {4, 1}, :left) == [["Hel…"]]
+      assert fit("Hello", {2, 1}, :left) == [["H…"]]
+      assert fit("Hello", {1, 1}, :left) == [["…"]]
+      assert fit("Hello", {0, 1}, :left) == [[]]
+      assert fit("José", {3, 1}, :left) == [["Jo…"]]
+    end
+
+    test "one-line unicode trims" do
+      assert fit("😀 👻 🐭", {8, 1}, :left) == [["😀 👻 🐭"]]
+      assert fit("😀 👻 🐭", {7, 1}, :left) == [["😀 👻 …"]]
+      assert fit("😀 👻 🐭", {1, 1}, :left) == [["…"]]
+      assert fit("😀 👻 🐭", {0, 1}, :left) == [[]]
+    end
+
+    test "one-line ansidata trims" do
       s = [:red, "He", "l", [:green | "lo"]]
-      assert ftw(s, 5, :left) == [:red, "Hel", :green, "lo"]
-      assert ftw(s, 4, :left) == [:red, "Hel", :green, "…"]
-      assert ftw(s, 3, :left) == [:red, "He…", :green]
-      assert ftw(s, 2, :left) == [:red, "H…", :green]
-      assert ftw(s, 1, :left) == [:red, "…", :green]
-      assert ftw(s, 0, :left) == [:red, :green]
+      assert fit(s, {5, 1}, :left) == [[:red, "Hel", :green, "lo"]]
+      assert fit(s, {4, 1}, :left) == [[:red, "Hel", :green, "…"]]
+      assert fit(s, {3, 1}, :left) == [[:red, "He…", :green]]
+      assert fit(s, {2, 1}, :left) == [[:red, "H…", :green]]
+      assert fit(s, {1, 1}, :left) == [[:red, "…", :green]]
+      assert fit(s, {0, 1}, :left) == [[:red, :green]]
     end
 
-    test "left justifies" do
-      assert ftw("Hello", 10, :left) == ["Hello     "]
-      assert ftw("José", 10, :left) == ["José      "]
-      assert ftw("😀 👻 🐭", 10, :left) == ["😀 👻 🐭  "]
+    test "one-line left justifies" do
+      assert fit("Hello", {10, 1}, :left) == [["Hello     "]]
+      assert fit("José", {10, 1}, :left) == [["José      "]]
+      assert fit("😀 👻 🐭", {10, 1}, :left) == [["😀 👻 🐭  "]]
     end
 
-    test "right justifies" do
-      assert ftw("Hello", 10, :right) == ["     Hello"]
-      assert ftw("José", 10, :right) == ["      José"]
-      assert ftw("😀 👻 🐭", 10, :right) == ["  😀 👻 🐭"]
+    test "one-line right justifies" do
+      assert fit("Hello", {10, 1}, :right) == [["     Hello"]]
+      assert fit("José", {10, 1}, :right) == [["      José"]]
+      assert fit("😀 👻 🐭", {10, 1}, :right) == [["  😀 👻 🐭"]]
     end
 
-    test "center justifies" do
-      assert ftw("Hello", 10, :center) == ["  Hello   "]
-      assert ftw("José", 10, :center) == ["   José   "]
-      assert ftw("😀 👻 🐭", 10, :center) == [" 😀 👻 🐭 "]
+    test "one-line center justifies" do
+      assert fit("Hello", {10, 1}, :center) == [["  Hello   "]]
+      assert fit("José", {10, 1}, :center) == [["   José   "]]
+      assert fit("😀 👻 🐭", {10, 1}, :center) == [[" 😀 👻 🐭 "]]
     end
 
-    test "multi-line trims" do
+    test "one-line multi-line-input trims" do
       text = "1. First thing\n2. Second thing\n3. Third thing"
-      assert ftw(text, 5, :left) == ["1. F…"]
-      assert ftw(text, 20, :left) == ["1. First thing…"]
-      assert ftw("Exact\n", 5, :left) == ["Exact"]
+      assert fit(text, {5, 1}, :left) == [["1. F…"]]
+      assert fit(text, {20, 1}, :left) == [["1. First thing      "]]
+      assert fit("Exact\n", {5, 1}, :left) == [["Exact"]]
+    end
+
+    test "multi-line string trims" do
+      text = "1. First thing\n2. Second thing\n3. Third thing"
+      assert fit(text, {5, 2}, :left) == [["1. F…"], ["2. S…"]]
+      assert fit(text, {20, 2}, :left) == [["1. First thing      "], ["2. Second thing     "]]
+
+      assert fit(text, {20, 3}, :left) == [
+               ["1. First thing      "],
+               ["2. Second thing     "],
+               ["3. Third thing      "]
+             ]
+
+      assert fit("Hello", {20, 3}, :left) == [
+               ["Hello               "],
+               ["                    "],
+               ["                    "]
+             ]
     end
   end
 end

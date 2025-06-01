@@ -168,16 +168,20 @@ defmodule Tablet do
   The context is a simple map with fields that Tablet adds for conveying the
   section and row number that it's on. Row numbers start at 0. For normally
   rendered tables (`:wrap_across` unset or set to 1), the row number
-  corresponds to the same element in the input data. For multi-column tables,
-  Tablet groups input rows that go on the same line together to form a new
-  table internally and the row number corresponds to rows in this table.
+  corresponds to row in the input data. For multi-column tables, the row
+  is the left-most row in the group of rows that are rendered together.
+
+  The `:slice` field indicates which line is being rendered within the row. For
+  single line rows, it will be 0. For multi-line rows, it will be 0 for the first
+  line, then 1, etc.
 
   Note that the line rendering function can output many lines of text per one input
   line. This is useful for adding borders.
   """
   @type line_context() :: %{
           section: :header | :body | :footer,
-          row: non_neg_integer()
+          row: non_neg_integer(),
+          slice: non_neg_integer()
         }
 
   @typedoc """
@@ -227,6 +231,7 @@ defmodule Tablet do
   * `:data` - data rows
   * `:column_widths` - a map of keys to their desired column widths. See `t:column_width/0`.
   * `:keys` - a list of keys to include in the table for each record. The order is reflected in the rendered table. Optional
+  * `:default_row_height` - number of rows or `:minimum` to set based on cell contents. Defaults to `:minimum`
   * `:default_column_width` - column width to use when unspecified in `:column_widths`. Defaults to `:minimum`
   * `:formatter` - a function to format the data in the table. The default is to convert everything to strings.
   * `:line_renderer` - a function that processes data for one line to the final output
@@ -244,6 +249,7 @@ defmodule Tablet do
           column_widths: %{key() => column_width()},
           data: [matching_map()],
           default_column_width: non_neg_integer() | :minimum | :expand,
+          default_row_height: pos_integer() | :minimum,
           formatter: formatter(),
           keys: nil | [key()],
           line_renderer: line_renderer(),
@@ -261,6 +267,7 @@ defmodule Tablet do
   defstruct column_widths: %{},
             data: [],
             default_column_width: :minimum,
+            default_row_height: :minimum,
             formatter: &Tablet.always_default_formatter/2,
             keys: nil,
             line_renderer: nil,
@@ -340,6 +347,7 @@ defmodule Tablet do
       |> Keyword.take([
         :column_widths,
         :default_column_width,
+        :default_row_height,
         :formatter,
         :keys,
         :name,
@@ -358,6 +366,10 @@ defmodule Tablet do
 
   defp normalize({:default_column_width, v} = opt)
        when (is_integer(v) and v >= 0) or v in [:expand, :minimum],
+       do: opt
+
+  defp normalize({:default_row_height, v} = opt)
+       when (is_integer(v) and v > 0) or v == :minimum,
        do: opt
 
   defp normalize({:formatter, v} = opt) when is_function(v, 2), do: opt
@@ -429,8 +441,8 @@ defmodule Tablet do
 
   defp update_column_width_pass_1(table, key, :minimum) do
     {key,
-     Enum.reduce(table.data, visual_length(format(table, :__header__, key)), fn row, acc ->
-       max(acc, visual_length(format(table, key, row[key])))
+     Enum.reduce(table.data, visual_width(format(table, :__header__, key)), fn row, acc ->
+       max(acc, visual_width(format(table, key, row[key])))
      end)}
   end
 
@@ -461,13 +473,17 @@ defmodule Tablet do
 
     header =
       table.keys
-      |> Enum.map(fn c -> {c, format(table, :__header__, c)} end)
+      |> Enum.map(fn c ->
+        s = format(table, :__header__, c)
+        width = table.column_widths[c]
+        Tablet.fit(s, {width, 1}, :left)
+      end)
       |> List.duplicate(table.wrap_across)
 
     [
-      table.line_renderer.(table, %{section: :header, row: 0}, header),
-      render_rows(table, %{section: :body, row: 0}),
-      table.line_renderer.(table, %{section: :footer, row: 0}, header)
+      table.line_renderer.(table, %{section: :header, row: 0, slice: 0}, header),
+      render_rows(table, %{section: :body, row: 0, slice: 0}),
+      table.line_renderer.(table, %{section: :footer, row: 0, slice: 0}, header)
     ]
   end
 
@@ -478,7 +494,40 @@ defmodule Tablet do
     table.data
     |> Enum.map(fn row -> for c <- table.keys, do: {c, format(table, c, row[c])} end)
     |> group_multi_column(table.keys, table.wrap_across)
-    |> Enum.with_index(fn rows, i -> table.line_renderer.(table, %{context | row: i}, rows) end)
+    |> Enum.with_index(fn rows, i ->
+      render_line(table, %{context | row: i}, rows)
+    end)
+  end
+
+  defp render_line(table, context, rows) do
+    height =
+      case table.default_row_height do
+        :minimum -> Enum.reduce(rows, 1, &max(&2, row_height(&1)))
+        h -> h
+      end
+
+    fit_rows = fit_all_cells(table, rows, height)
+    sliced_rows = fit_rows |> Enum.map(&zip_lists/1) |> zip_lists()
+
+    Enum.with_index(sliced_rows, fn rows, i ->
+      table.line_renderer.(table, %{context | slice: i}, rows)
+    end)
+  end
+
+  defp zip_lists(l), do: Enum.zip_with(l, &Function.identity/1)
+
+  defp row_height(row) do
+    Enum.reduce(row, 1, fn {_, v}, acc -> max(acc, visual_height(v)) end)
+  end
+
+  defp fit_all_cells(table, rows, height) do
+    rows
+    |> Enum.map(fn row ->
+      Enum.map(row, fn {c, v} ->
+        width = table.column_widths[c]
+        Tablet.fit(v, {width, height}, :left)
+      end)
+    end)
   end
 
   defp group_multi_column(data, keys, wrap_across)
@@ -513,11 +562,13 @@ defmodule Tablet do
     end
   end
 
-  defp default_format(_id, data) when is_list(data) or is_binary(data), do: data
-  defp default_format(_id, nil), do: ""
-  defp default_format(_id, data) when is_atom(data), do: inspect(data)
+  @doc false
+  @spec default_format(key(), any()) :: IO.ANSI.ansidata()
+  def default_format(_id, data) when is_list(data) or is_binary(data), do: data
+  def default_format(_id, nil), do: ""
+  def default_format(_id, data) when is_atom(data), do: inspect(data)
 
-  defp default_format(_id, data) do
+  def default_format(_id, data) do
     case String.Chars.impl_for(data) do
       nil -> inspect(data)
       mod -> mod.to_string(data)
@@ -529,17 +580,53 @@ defmodule Tablet do
 
   This function is useful for styling output to fit data into a cell.
   """
-  @spec fit_to_width(IO.ANSI.ansidata(), pos_integer(), justification()) :: IO.ANSI.ansidata()
-  def fit_to_width(ansidata, len, justification) do
-    {trimmed, excess} = ansidata |> flatten() |> truncate(len, [])
-    pad(trimmed, excess, justification)
+  @spec fit(IO.ANSI.ansidata(), {pos_integer(), pos_integer()}, justification()) ::
+          IO.ANSI.ansidata()
+  def fit(ansidata, {w, h}, justification)
+      when is_integer(w) and w >= 0 and is_integer(h) and h > 0 do
+    ansidata
+    |> flatten()
+    |> break_into_lines()
+    |> pad_lines(h)
+    |> Enum.map(fn line ->
+      {trimmed, excess} = truncate(line, w, [])
+      pad(trimmed, excess, justification)
+    end)
   end
+
+  # Take the first n lines and if there aren't n lines, add empty lines
+  defp pad_lines(_, 0), do: []
+  defp pad_lines([h | t], n), do: [h | pad_lines(t, n - 1)]
+  defp pad_lines([], n), do: [[] | pad_lines([], n - 1)]
 
   # Flatten ansidata to a list of strings and ANSI codes
   defp flatten(ansidata), do: flatten(ansidata, []) |> Enum.reverse()
   defp flatten([], acc), do: acc
   defp flatten([h | t], acc), do: flatten(t, flatten(h, acc))
   defp flatten(a, acc), do: [a | acc]
+
+  # Input: ansidata, output: list of ansidata split into lines
+  # ANSI codes are re-issued on each line to preserve ANSI state when interleaved with other cells
+  defp break_into_lines(ansidata), do: break_into_lines(ansidata, [], [], [])
+
+  defp break_into_lines([], current, lines, _ansi),
+    do: Enum.reverse([Enum.reverse(current) | lines])
+
+  defp break_into_lines(["" | t], current, lines, ansi),
+    do: break_into_lines(t, current, lines, ansi)
+
+  defp break_into_lines([h | t], current, lines, ansi) when is_binary(h) do
+    case String.split(h, "\n", parts: 2) do
+      [line] ->
+        break_into_lines(t, [line | current], lines, ansi)
+
+      [line, rest] ->
+        break_into_lines([rest | t], ansi, [Enum.reverse([line | current]) | lines], ansi)
+    end
+  end
+
+  defp break_into_lines([h | t], current, lines, ansi),
+    do: break_into_lines(t, [h | current], lines, [h | ansi])
 
   # Truncate flattened ansidata and add ellipsis if needed
   defp truncate([], len, acc), do: {Enum.reverse(acc), len}
@@ -621,18 +708,40 @@ defmodule Tablet do
   defp merge_text([], last), do: [last]
 
   @doc """
-  Calculate the visual length of an ansidata string
+  Calculate the size of ansidata when rendered
 
-  This function has simplistic logic to account for Unicode characters that
-  typically render in the space of two characters when using a fixed width font.
+  The return value is the width and height.
+
+  ## Examples
+
+  ```
+  iex> ansidata = ["Hello, ", :red, "world", :reset, "!"]
+  iex> Tablet.visual_size(ansidata)
+  {13, 1}
+  ```
   """
-  @spec visual_length(IO.ANSI.ansidata()) :: non_neg_integer()
-  def visual_length(ansidata) when is_binary(ansidata) or is_list(ansidata) do
+  @spec visual_size(IO.ANSI.ansidata()) :: {non_neg_integer(), pos_integer()}
+  def visual_size(ansidata) when is_binary(ansidata) or is_list(ansidata) do
     IO.ANSI.format(ansidata, false)
     |> IO.chardata_to_string()
     |> String.graphemes()
-    |> Enum.reduce(0, fn c, acc -> acc + wcwidth(c) end)
+    |> measure(0, 0, 1)
   end
+
+  defp visual_width(ansidata) do
+    {width, _height} = visual_size(ansidata)
+    width
+  end
+
+  defp visual_height(ansidata) do
+    {_width, height} = visual_size(ansidata)
+    height
+  end
+
+  # Add up the character widths and newlines
+  defp measure([], current_width, w, h), do: {max(current_width, w), h}
+  defp measure(["\n" | t], current_width, w, h), do: measure(t, 0, max(current_width, w), h + 1)
+  defp measure([c | t], current_width, w, h), do: measure(t, current_width + wcwidth(c), w, h)
 
   # Simplistic wcwidth implementation based on https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
   # with the addition of the 0x1f170..0x1f9ff range for emojis.
