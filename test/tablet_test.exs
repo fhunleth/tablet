@@ -288,12 +288,46 @@ defmodule TabletTest do
     assert Tablet.simplify([:red, :red, ~c"hello", :reset]) == [:red, "hello", :reset]
   end
 
-  test "visual_length/1" do
-    assert Tablet.visual_length("Hello") == 5
-    assert Tablet.visual_length("") == 0
-    assert Tablet.visual_length("José") == 4
-    assert Tablet.visual_length("🇫🇷") == 2
-    assert Tablet.visual_length("😀 👻 🐭") == 8
+  describe "visual_size/1" do
+    test "one liners" do
+      assert Tablet.visual_size("Hello") == {5, 1}
+      assert Tablet.visual_size("José") == {4, 1}
+    end
+
+    test "emojis" do
+      assert Tablet.visual_size("🇫🇷") == {2, 1}
+      assert Tablet.visual_size("😀 👻 🐭") == {8, 1}
+      assert Tablet.visual_size("♔♕♖♗♘♙") == {6, 1}
+    end
+
+    test "cjk strings" do
+      assert Tablet.visual_size("你好") == {4, 1}
+      assert Tablet.visual_size("こんにちは") == {10, 1}
+      assert Tablet.visual_size("안녕하세요") == {10, 1}
+    end
+
+    test "empty string" do
+      assert Tablet.visual_size("") == {0, 1}
+    end
+
+    test "single line with ansi data" do
+      assert Tablet.visual_size([:red, "Hello", :reset]) == {5, 1}
+      assert Tablet.visual_size([:red, "Hello", :green, " World", :reset]) == {11, 1}
+      assert Tablet.visual_size([:red, "Hello", :reset]) == {5, 1}
+      assert Tablet.visual_size([:red, "José", :reset]) == {4, 1}
+    end
+
+    test "multi-line" do
+      assert Tablet.visual_size("Hello\nWorld") == {5, 2}
+      assert Tablet.visual_size("Hello\nJosé") == {5, 2}
+      assert Tablet.visual_size("😀 👻\n😀 👻 🐭") == {8, 2}
+    end
+
+    test "ansi data" do
+      assert Tablet.visual_size([:red, "Hello", :reset]) == {5, 1}
+      assert Tablet.visual_size([:red, "Hello", :green, " World", :reset]) == {11, 1}
+      assert Tablet.visual_size([:red, "Hello", :reset, "\n", :green, "World"]) == {5, 2}
+    end
   end
 
   defp ftw(ansidata, len, justification) do

@@ -402,8 +402,8 @@ defmodule Tablet do
 
   defp update_column_width_pass_1(table, key, :minimum) do
     {key,
-     Enum.reduce(table.data, visual_length(format(table, :__header__, key)), fn row, acc ->
-       max(acc, visual_length(format(table, key, row[key])))
+     Enum.reduce(table.data, visual_width(format(table, :__header__, key)), fn row, acc ->
+       max(acc, visual_width(format(table, key, row[key])))
      end)}
   end
 
@@ -594,18 +594,35 @@ defmodule Tablet do
   defp merge_text([], last), do: [last]
 
   @doc """
-  Calculate the visual length of an ansidata string
+  Calculate the size of ansidata when rendered
 
-  This function has simplistic logic to account for Unicode characters that
-  typically render in the space of two characters when using a fixed width font.
+  The return value is the width and height.
+
+  ## Examples
+
+  ```
+  iex> ansidata = ["Hello, ", :red, "world", :reset, "!"]
+  iex> Tablet.visual_size(ansidata)
+  {13, 1}
+  ```
   """
-  @spec visual_length(IO.ANSI.ansidata()) :: non_neg_integer()
-  def visual_length(ansidata) when is_binary(ansidata) or is_list(ansidata) do
+  @spec visual_size(IO.ANSI.ansidata()) :: {non_neg_integer(), pos_integer()}
+  def visual_size(ansidata) when is_binary(ansidata) or is_list(ansidata) do
     IO.ANSI.format(ansidata, false)
     |> IO.chardata_to_string()
     |> String.graphemes()
-    |> Enum.reduce(0, fn c, acc -> acc + wcwidth(c) end)
+    |> measure(0, 0, 1)
   end
+
+  defp visual_width(ansidata) do
+    {width, _height} = visual_size(ansidata)
+    width
+  end
+
+  # Add up the character widths and newlines
+  defp measure([], current_width, w, h), do: {max(current_width, w), h}
+  defp measure(["\n" | t], current_width, w, h), do: measure(t, 0, max(current_width, w), h + 1)
+  defp measure([c | t], current_width, w, h), do: measure(t, current_width + wcwidth(c), w, h)
 
   # Simplistic wcwidth implementation based on https://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c
   # with the addition of the 0x1f170..0x1f9ff range for emojis.
