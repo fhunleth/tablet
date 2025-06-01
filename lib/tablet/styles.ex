@@ -24,7 +24,7 @@ defmodule Tablet.Styles do
   """
   @spec compact(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
           IO.ANSI.ansidata()
-  def compact(table, %{line: :header}, content) do
+  def compact(table, %{section: :header}, content) do
     [
       compact_title(table),
       content |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse("   "),
@@ -32,7 +32,7 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def compact(table, %{line: n}, content) when is_integer(n) do
+  def compact(table, %{section: :body}, content) do
     [content |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
   end
 
@@ -71,7 +71,7 @@ defmodule Tablet.Styles do
   Pass `style: :markdown` to `Tablet.puts/2` or `Tablet.render/2` to use.
   """
   @spec markdown(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def markdown(table, %{line: :header}, content) do
+  def markdown(table, %{section: :header}, content) do
     [
       markdown_title(table),
       content |> Enum.map(&markdown_row(table, &1)),
@@ -86,7 +86,7 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def markdown(table, %{line: n}, content) when is_integer(n) do
+  def markdown(table, %{section: :body}, content) do
     [content |> Enum.map(&markdown_row(table, &1)), "|\n"]
   end
 
@@ -185,21 +185,21 @@ defmodule Tablet.Styles do
   """
   @spec generic_box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
           IO.ANSI.ansidata()
-  def generic_box(table, %{line: :header, border: border}, content) do
+  def generic_box(table, %{section: :header, border: border}, content) do
     [
       generic_box_title(table, border, content),
       generic_box_row(table, content, border.v)
     ]
   end
 
-  def generic_box(table, %{line: line, border: border}, content) when is_integer(line) do
+  def generic_box(table, %{section: :body, border: border}, content) do
     [
       generic_box_border(table, content, border.l, border.c, border.r, border.h),
       generic_box_row(table, content, border.v)
     ]
   end
 
-  def generic_box(table, %{line: :footer, border: border}, row) do
+  def generic_box(table, %{section: :footer, border: border}, row) do
     generic_box_border(table, row, border.ll, border.lc, border.lr, border.h)
   end
 
@@ -261,7 +261,7 @@ defmodule Tablet.Styles do
   To use, pass `style: :ledger` to `Tablet.puts/2` or `Tablet.render/2`.
   """
   @spec ledger(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def ledger(table, %{line: :header}, content) do
+  def ledger(table, %{section: :header}, content) do
     [
       :light_blue_background,
       :black,
@@ -273,9 +273,9 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def ledger(table, %{line: n}, content) when is_integer(n) do
+  def ledger(table, %{section: :body, row: n}, content) do
     color =
-      if rem(n, 2) == 0, do: [:white_background, :black], else: [:light_black_background, :white]
+      if rem(n, 2) == 1, do: [:white_background, :black], else: [:light_black_background, :white]
 
     [
       color,

@@ -145,14 +145,19 @@ defmodule Tablet do
   @typedoc """
   Styling context
 
-  The context is a simple map with two fields that Tablet adds for conveying
-  the line that it's on. The key to remember is that the word "line" doesn't
-  necessarily represent one line of output. It's common for the `:header` line
-  to output multiple lines for borders or titles. Each numbered line may result
-  in multiple lines after styling.
+  The context is a simple map with fields that Tablet adds for conveying the
+  section and row number that it's on. Row numbers start at 0. For normally
+  rendered tables (`:wrap_across` unset or set to 1), the row number
+  corresponds to the same element in the input data. For multi-column tables,
+  Tablet groups input rows that go on the same line together to form a new
+  table internally and the row number corresponds to rows in this table.
+
+  Note that the styling function can output many rows of text per one input
+  row. Tablet doesn't check and this is common when adding borders.
   """
   @type styling_context() :: %{
-          required(:line) => pos_integer() | :header | :footer,
+          required(:section) => :header | :body | :footer,
+          required(:row) => non_neg_integer(),
           required(:n) => non_neg_integer(),
           optional(atom()) => any()
         }
@@ -161,11 +166,11 @@ defmodule Tablet do
   Styling callback function
 
   Tablet makes calls to the styling function for each line in the table
-  starting with the header, then the rows (1 to N), and finally the footer. The
-  second parameter is the `t:styling_context/0`. Users can supply additional
-  context via the `:context` option when rendering the tables. This is the
-  means by which users can inform the styling function of potentially important
-  things like locale.
+  starting with the header, then the rows (0 to N-1), and finally the footer.
+  The second parameter is the `t:styling_context/0`. Users can supply
+  additional context via the `:context` option when rendering the tables. This
+  is the means by which users can inform the styling function of potentially
+  important things like locale.
 
   The third parameter is a list of `t:IO.ANSI.ansidata/0` values. When
   rendering multi-column tables (`:wrap_across` set to greater than 1), each
@@ -439,9 +444,9 @@ defmodule Tablet do
       |> List.duplicate(table.wrap_across)
 
     [
-      table.style.(table, Map.put(context, :line, :header), header),
-      render_rows(table, context),
-      table.style.(table, Map.put(context, :line, :footer), header)
+      table.style.(table, Map.put(context, :section, :header), header),
+      render_rows(table, Map.put(context, :section, :body)),
+      table.style.(table, Map.put(context, :section, :footer), header)
     ]
   end
 
@@ -452,9 +457,7 @@ defmodule Tablet do
     table.data
     |> Enum.map(fn row -> for c <- table.keys, do: {c, format(table, c, row[c])} end)
     |> group_multi_column(table.keys, table.wrap_across)
-    |> Enum.with_index(fn rows, i ->
-      table.style.(table, Map.put(context, :line, i + 1), rows)
-    end)
+    |> Enum.with_index(fn rows, i -> table.style.(table, Map.put(context, :row, i), rows) end)
   end
 
   defp group_multi_column(data, keys, wrap_across)
