@@ -24,16 +24,16 @@ defmodule Tablet.Styles do
   """
   @spec compact(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
           IO.ANSI.ansidata()
-  def compact(table, %{line: :header}, rows) do
+  def compact(table, %{line: :header}, content) do
     [
       compact_title(table),
-      rows |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse("   "),
+      content |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse("   "),
       "\n"
     ]
   end
 
-  def compact(table, %{line: n}, rows) when is_integer(n) do
-    [rows |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
+  def compact(table, %{line: n}, content) when is_integer(n) do
+    [content |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
   end
 
   def compact(_table, _context, _row) do
@@ -71,12 +71,12 @@ defmodule Tablet.Styles do
   Pass `style: :markdown` to `Tablet.puts/2` or `Tablet.render/2` to use.
   """
   @spec markdown(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def markdown(table, %{line: :header}, rows) do
+  def markdown(table, %{line: :header}, content) do
     [
       markdown_title(table),
-      rows |> Enum.map(&markdown_row(table, &1)),
+      content |> Enum.map(&markdown_row(table, &1)),
       "|\n",
-      rows
+      content
       |> List.flatten()
       |> Enum.map(fn {c, _v} ->
         width = table.column_widths[c]
@@ -86,8 +86,8 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def markdown(table, %{line: n}, rows) when is_integer(n) do
-    [rows |> Enum.map(&markdown_row(table, &1)), "|\n"]
+  def markdown(table, %{line: n}, content) when is_integer(n) do
+    [content |> Enum.map(&markdown_row(table, &1)), "|\n"]
   end
 
   def markdown(_table, _context, _row) do
@@ -114,7 +114,7 @@ defmodule Tablet.Styles do
   To use, pass `style: :box` to `Tablet.puts/2` or `Tablet.render/2`.
   """
   @spec box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def box(table, context, rows) do
+  def box(table, context, content) do
     border = %{
       h: "─",
       v: "|",
@@ -131,7 +131,7 @@ defmodule Tablet.Styles do
 
     new_context = Map.put(context, :border, border)
 
-    generic_box(table, new_context, rows)
+    generic_box(table, new_context, content)
   end
 
   @doc """
@@ -144,7 +144,7 @@ defmodule Tablet.Styles do
   """
   @spec unicode_box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
           IO.ANSI.ansidata()
-  def unicode_box(table, context, rows) do
+  def unicode_box(table, context, content) do
     border = %{
       h: "─",
       v: "│",
@@ -161,7 +161,7 @@ defmodule Tablet.Styles do
 
     new_context = Map.put(context, :border, border)
 
-    generic_box(table, new_context, rows)
+    generic_box(table, new_context, content)
   end
 
   @doc """
@@ -185,17 +185,17 @@ defmodule Tablet.Styles do
   """
   @spec generic_box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
           IO.ANSI.ansidata()
-  def generic_box(table, %{line: :header, border: border}, rows) do
+  def generic_box(table, %{line: :header, border: border}, content) do
     [
-      generic_box_title(table, border, rows),
-      generic_box_row(table, rows, border.v)
+      generic_box_title(table, border, content),
+      generic_box_row(table, content, border.v)
     ]
   end
 
-  def generic_box(table, %{line: line, border: border}, rows) when is_integer(line) do
+  def generic_box(table, %{line: line, border: border}, content) when is_integer(line) do
     [
-      generic_box_border(table, rows, border.l, border.c, border.r, border.h),
-      generic_box_row(table, rows, border.v)
+      generic_box_border(table, content, border.l, border.c, border.r, border.h),
+      generic_box_row(table, content, border.v)
     ]
   end
 
@@ -203,17 +203,17 @@ defmodule Tablet.Styles do
     generic_box_border(table, row, border.ll, border.lc, border.lr, border.h)
   end
 
-  defp generic_box_title(%{name: []} = table, border, rows) do
-    generic_box_border(table, rows, border.ul, border.uc, border.ur, border.h)
+  defp generic_box_title(%{name: []} = table, border, content) do
+    generic_box_border(table, content, border.ul, border.uc, border.ur, border.h)
   end
 
-  defp generic_box_title(table, border, rows) do
+  defp generic_box_title(table, border, content) do
     w = interior_width(table, 2, 1, 1)
 
     [
       [border.ul, String.duplicate(border.h, w), border.ur, "\n"],
       [border.v, Tablet.fit_to_width(table.name, w, :center), border.v, "\n"],
-      generic_box_border(table, rows, border.l, border.uc, border.r, border.h)
+      generic_box_border(table, content, border.l, border.uc, border.r, border.h)
     ]
   end
 
@@ -261,25 +261,25 @@ defmodule Tablet.Styles do
   To use, pass `style: :ledger` to `Tablet.puts/2` or `Tablet.render/2`.
   """
   @spec ledger(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def ledger(table, %{line: :header}, rows) do
+  def ledger(table, %{line: :header}, content) do
     [
       :light_blue_background,
       :black,
       ledger_title(table),
-      rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
+      content |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
       :default_background,
       :default_color,
       "\n"
     ]
   end
 
-  def ledger(table, %{line: n}, rows) when is_integer(n) do
+  def ledger(table, %{line: n}, content) when is_integer(n) do
     color =
       if rem(n, 2) == 0, do: [:white_background, :black], else: [:light_black_background, :white]
 
     [
       color,
-      rows |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
+      content |> Enum.map(&ledger_row(table, &1)) |> Enum.intersperse(" "),
       :default_background,
       :default_color,
       "\n"
