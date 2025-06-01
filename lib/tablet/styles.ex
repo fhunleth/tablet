@@ -22,7 +22,7 @@ defmodule Tablet.Styles do
   This style produces compact output by only underlining the header and adding
   whitespace around data. It is the default style.
   """
-  @spec compact(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
+  @spec compact(Tablet.t(), Tablet.styling_context(), [[IO.ANSI.ansidata()]]) ::
           IO.ANSI.ansidata()
   def compact(table, %{section: :header}, content) do
     [

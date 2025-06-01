@@ -216,6 +216,7 @@ defmodule Tablet do
   * `:default_column_width` - column width to use when unspecified in `:column_widths`. Defaults to `:minimum`
   * `:formatter` - a function to format the data in the table. The default is to convert everything to strings.
   * `:name` - the name or table title. This can be any `t:IO.ANSI.ansidata/0` value.
+  * `:row_heights` - height of each row in lines
   * `:style` - one of the built-in styles or a function to style the table. The default is `:compact`.
   * `:total_width` - the width of the console for use when expanding columns. The default is 0 to autodetect.
   * `:wrap_across` - the number of columns to wrap across in multi-column mode. The default is 1.
@@ -228,6 +229,7 @@ defmodule Tablet do
           formatter: formatter(),
           keys: nil | [key()],
           name: IO.ANSI.ansidata(),
+          row_heights: [pos_integer()],
           style: atom() | style_function(),
           total_width: non_neg_integer(),
           wrap_across: pos_integer()
@@ -239,6 +241,7 @@ defmodule Tablet do
             formatter: &Tablet.always_default_formatter/2,
             name: [],
             keys: nil,
+            row_heights: [],
             style: &Tablet.Styles.compact/3,
             total_width: 0,
             wrap_across: 1
