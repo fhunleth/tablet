@@ -260,7 +260,7 @@ defmodule TabletTest do
       assert widths == %{id: 25, name: 25, age: 26}
     end
 
-    test "multicolumn expand three" do
+    test "multi-column expand three" do
       data = [%{id: "123", name: "Abcdefghijklmnopqrstuvwxyz", age: 30}]
 
       widths =

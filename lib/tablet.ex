@@ -531,7 +531,7 @@ defmodule Tablet do
 
   defp truncate([s | t], len, acc), do: truncate(t, len, [s | acc])
 
-  # Truncating strings requires handling variable width graphemes
+  # Truncating strings requires handling variable-width graphemes
   # This returns the new remaining length, the truncated string, and if the string
   # fits perfectly, the last grapheme. The last grapheme might be replaced with an
   # ellipsis or not depending on whether there are more characters.
