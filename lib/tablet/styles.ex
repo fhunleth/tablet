@@ -48,21 +48,21 @@ defmodule Tablet.Styles do
 
   defp compact_title(table) do
     w = interior_width(table, 0, 2, 3)
-    [Tablet.fit_to_width(table.name, w, :center), "\n"]
+    [Tablet.fit(table.name, {w, 1}, :center), "\n"]
   end
 
   defp compact_header(table, header) do
     header
     |> Enum.map(fn {c, v} ->
       width = table.column_widths[c]
-      [:underline, Tablet.fit_to_width(v, width, :left), :no_underline]
+      [:underline, Tablet.fit(v, {width, 1}, :left), :no_underline]
     end)
     |> Enum.intersperse("  ")
   end
 
   defp compact_row(table, row) do
     row
-    |> Enum.map(fn {c, v} -> Tablet.fit_to_width(v, table.column_widths[c], :left) end)
+    |> Enum.map(fn {c, v} -> Tablet.fit(v, {table.column_widths[c], 1}, :left) end)
     |> Enum.intersperse("  ")
   end
 
@@ -112,7 +112,7 @@ defmodule Tablet.Styles do
   defp markdown_row(table, row) do
     Enum.map(row, fn {c, v} ->
       width = table.column_widths[c]
-      ["| ", Tablet.fit_to_width(v, width, :left), " "]
+      ["| ", Tablet.fit(v, {width, 1}, :left), " "]
     end)
   end
 
@@ -226,7 +226,7 @@ defmodule Tablet.Styles do
 
     [
       [border.ul, String.duplicate(border.h, w), border.ur, "\n"],
-      [border.v, Tablet.fit_to_width(table.name, w, :center), border.v, "\n"],
+      [border.v, Tablet.fit(table.name, {w, 1}, :center), border.v, "\n"],
       generic_box_border(table, content, border.l, border.uc, border.r, border.h)
     ]
   end
@@ -249,7 +249,7 @@ defmodule Tablet.Styles do
       |> List.flatten()
       |> Enum.map(fn {c, v} ->
         width = table.column_widths[c]
-        [" ", Tablet.fit_to_width(v, width, :left), " ", vertical]
+        [" ", Tablet.fit(v, {width, 1}, :left), " ", vertical]
       end)
 
     [vertical, items, "\n"]
@@ -315,7 +315,7 @@ defmodule Tablet.Styles do
     w = interior_width(table, 2, 0, 1)
 
     [
-      Tablet.fit_to_width(table.name, w, :center),
+      Tablet.fit(table.name, {w, 1}, :center),
       :default_background,
       :default_color,
       "\n",
@@ -327,7 +327,7 @@ defmodule Tablet.Styles do
   defp ledger_row(table, row) do
     Enum.map(row, fn {c, v} ->
       width = table.column_widths[c]
-      [" ", Tablet.fit_to_width(v, width, :left), " "]
+      [" ", Tablet.fit(v, {width, 1}, :left), " "]
     end)
   end
 end

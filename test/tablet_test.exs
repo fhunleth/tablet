@@ -331,12 +331,16 @@ defmodule TabletTest do
     end
   end
 
-  defp ftw(ansidata, len, justification) do
-    Tablet.fit_to_width(ansidata, len, justification) |> Tablet.simplify()
+  defp ftw(ansidata, len, justification) when is_integer(len) do
+    fit(ansidata, {len, 1}, justification)
   end
 
-  describe "fit_to_width/3" do
-    test "string trims" do
+  defp fit(ansidata, size, justification) when is_tuple(size) do
+    Tablet.fit(ansidata, size, justification) |> Tablet.simplify()
+  end
+
+  describe "fit/3" do
+    test "one-line string trims" do
       assert ftw("Hello", 5, :left) == ["Hello"]
       assert ftw("Hello", 4, :left) == ["Hel…"]
       assert ftw("Hello", 2, :left) == ["H…"]
@@ -345,14 +349,14 @@ defmodule TabletTest do
       assert ftw("José", 3, :left) == ["Jo…"]
     end
 
-    test "unicode trims" do
+    test "one-line unicode trims" do
       assert ftw("😀 👻 🐭", 8, :left) == ["😀 👻 🐭"]
       assert ftw("😀 👻 🐭", 7, :left) == ["😀 👻 …"]
       assert ftw("😀 👻 🐭", 1, :left) == ["…"]
       assert ftw("😀 👻 🐭", 0, :left) == []
     end
 
-    test "ansidata trims" do
+    test "one-line ansidata trims" do
       s = [:red, "He", "l", [:green | "lo"]]
       assert ftw(s, 5, :left) == [:red, "Hel", :green, "lo"]
       assert ftw(s, 4, :left) == [:red, "Hel", :green, "…"]
@@ -362,29 +366,36 @@ defmodule TabletTest do
       assert ftw(s, 0, :left) == [:red, :green]
     end
 
-    test "left justifies" do
+    test "one-line left justifies" do
       assert ftw("Hello", 10, :left) == ["Hello     "]
       assert ftw("José", 10, :left) == ["José      "]
       assert ftw("😀 👻 🐭", 10, :left) == ["😀 👻 🐭  "]
     end
 
-    test "right justifies" do
+    test "one-line right justifies" do
       assert ftw("Hello", 10, :right) == ["     Hello"]
       assert ftw("José", 10, :right) == ["      José"]
       assert ftw("😀 👻 🐭", 10, :right) == ["  😀 👻 🐭"]
     end
 
-    test "center justifies" do
+    test "one-line center justifies" do
       assert ftw("Hello", 10, :center) == ["  Hello   "]
       assert ftw("José", 10, :center) == ["   José   "]
       assert ftw("😀 👻 🐭", 10, :center) == [" 😀 👻 🐭 "]
     end
 
-    test "multi-line trims" do
+    test "one-line multi-line-input trims" do
       text = "1. First thing\n2. Second thing\n3. Third thing"
       assert ftw(text, 5, :left) == ["1. F…"]
       assert ftw(text, 20, :left) == ["1. First thing…"]
       assert ftw("Exact\n", 5, :left) == ["Exact"]
+    end
+
+    test "multi-line string trims" do
+      text = "1. First thing\n2. Second thing\n3. Third thing"
+      assert fit(text, {5, 2}, :left) == ["1. F…\n2. S…"]
+      assert fit(text, {20, 2}, :left) == ["1. First thing…\n2. Second thing"]
+      assert fit(text, {20, 3}, :left) == ["1. First thing…\n2. Second thing\n3. Third thing"]
     end
   end
 end

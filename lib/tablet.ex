@@ -539,9 +539,10 @@ defmodule Tablet do
 
   This function is useful for styling output to fit data into a cell.
   """
-  @spec fit_to_width(IO.ANSI.ansidata(), pos_integer(), justification()) :: IO.ANSI.ansidata()
-  def fit_to_width(ansidata, len, justification) do
-    {trimmed, excess} = ansidata |> flatten() |> truncate(len, [])
+  @spec fit(IO.ANSI.ansidata(), {pos_integer(), pos_integer()}, justification()) ::
+          IO.ANSI.ansidata()
+  def fit(ansidata, {w, _h}, justification) when is_integer(w) do
+    {trimmed, excess} = ansidata |> flatten() |> truncate(w, [])
     pad(trimmed, excess, justification)
   end
 
