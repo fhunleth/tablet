@@ -143,7 +143,23 @@ defmodule Tablet do
   @type column_width() :: pos_integer() | :default | :minimum | :expand
 
   @typedoc """
-  Styling context
+  Style function callback
+
+  Tablet calls this function after processing user options. The style
+  function can modify anything in Tablet's state or wrap functions or
+  do whatever it wants to adjust the output.
+
+  Options are passed via the `:style_options` option which is included in the
+  parameter.
+
+  For most styles, the callback should set:
+
+  * `:line_renderer` - callback to add borders, padding, etc.
+  """
+  @type style_function() :: (t() -> t())
+
+  @typedoc """
+  Line rendering context
 
   The context is a simple map with fields that Tablet adds for conveying the
   section and row number that it's on. Row numbers start at 0. For normally
@@ -152,18 +168,17 @@ defmodule Tablet do
   Tablet groups input rows that go on the same line together to form a new
   table internally and the row number corresponds to rows in this table.
 
-  Note that the styling function can output many rows of text per one input
-  row. Tablet doesn't check and this is common when adding borders.
+  Note that the line rendering function can output many lines of text per one input
+  line. This is useful for adding borders.
   """
-  @type styling_context() :: %{
-          required(:section) => :header | :body | :footer,
-          required(:row) => non_neg_integer(),
-          required(:n) => non_neg_integer(),
-          optional(atom()) => any()
+  @type line_context() :: %{
+          section: :header | :body | :footer,
+          row: non_neg_integer(),
+          n: non_neg_integer()
         }
 
   @typedoc """
-  Styling callback function
+  Row rendering callback function
 
   Tablet makes calls to the styling function for each line in the table
   starting with the header, then the rows (0 to N-1), and finally the footer.
@@ -188,7 +203,7 @@ defmodule Tablet do
   information to do more complicated things like match on even or odd lines and
   more if needed.
   """
-  @type style_function() :: (t(), styling_context(), [IO.ANSI.ansidata()] -> IO.ANSI.ansidata())
+  @type line_renderer() :: (t(), line_context(), [IO.ANSI.ansidata()] -> IO.ANSI.ansidata())
 
   @typedoc """
   Data formatter callback function
@@ -211,35 +226,38 @@ defmodule Tablet do
   Fields:
   * `:data` - data rows
   * `:column_widths` - a map of keys to their desired column widths. See `t:column_width/0`.
-  * `:context` - user-provided context for styling the table
   * `:keys` - a list of keys to include in the table for each record. The order is reflected in the rendered table. Optional
   * `:default_column_width` - column width to use when unspecified in `:column_widths`. Defaults to `:minimum`
   * `:formatter` - a function to format the data in the table. The default is to convert everything to strings.
+  * `:line_renderer` - a function that processes data for one line to the final output
   * `:name` - the name or table title. This can be any `t:IO.ANSI.ansidata/0` value.
   * `:style` - one of the built-in styles or a function to style the table. The default is `:compact`.
+  * `:style_options` - styling options. See style documentation for details.
   * `:total_width` - the width of the console for use when expanding columns. The default is 0 to autodetect.
   * `:wrap_across` - the number of columns to wrap across in multi-column mode. The default is 1.
   """
   @type t :: %__MODULE__{
           column_widths: %{key() => column_width()},
-          context: map(),
           data: [matching_map()],
           default_column_width: column_width(),
           formatter: formatter(),
+          line_renderer: line_renderer(),
           keys: nil | [key()],
           name: IO.ANSI.ansidata(),
           style: atom() | style_function(),
+          style_options: keyword(),
           total_width: non_neg_integer(),
           wrap_across: pos_integer()
         }
   defstruct column_widths: %{},
-            context: %{},
             data: [],
             default_column_width: :minimum,
             formatter: &Tablet.always_default_formatter/2,
             keys: nil,
+            line_renderer: nil,
             name: [],
-            style: &Tablet.Styles.compact/3,
+            style: &Tablet.Styles.compact/1,
+            style_options: [],
             total_width: 0,
             wrap_across: 1
 
@@ -322,6 +340,7 @@ defmodule Tablet do
         :keys,
         :name,
         :style,
+        :style_options,
         :total_width,
         :wrap_across
       ])
@@ -341,8 +360,9 @@ defmodule Tablet do
   defp normalize({:formatter, v} = opt) when is_function(v, 2), do: opt
   defp normalize({:keys, v} = opt) when is_list(v), do: opt
   defp normalize({:name, v} = opt) when is_binary(v) or is_list(v), do: opt
-  defp normalize({:style, v} = opt) when is_function(v, 3), do: opt
+  defp normalize({:style, v} = opt) when is_function(v, 1), do: opt
   defp normalize({:style, v}) when is_atom(v), do: {:style, Styles.resolve(v)}
+  defp normalize({:style_options, v} = opt) when is_list(v), do: opt
   defp normalize({:total_width, v} = opt) when is_integer(v) and v >= 0, do: opt
   defp normalize({:wrap_across, v} = opt) when is_integer(v) and v >= 1, do: opt
 
@@ -435,8 +455,8 @@ defmodule Tablet do
   end
 
   defp to_ansidata(table) do
-    table = table |> fill_in_keys() |> calculate_column_widths()
-    context = Map.put(table.context, :n, length(table.data))
+    table = table |> fill_in_keys() |> table.style.() |> calculate_column_widths()
+    n = length(table.data)
 
     header =
       table.keys
@@ -444,9 +464,9 @@ defmodule Tablet do
       |> List.duplicate(table.wrap_across)
 
     [
-      table.style.(table, Map.put(context, :section, :header), header),
-      render_rows(table, Map.put(context, :section, :body)),
-      table.style.(table, Map.put(context, :section, :footer), header)
+      table.line_renderer.(table, %{section: :header, row: 0, n: n}, header),
+      render_rows(table, %{section: :body, row: 0, n: n}),
+      table.line_renderer.(table, %{section: :footer, row: 0, n: n}, header)
     ]
   end
 
@@ -457,7 +477,7 @@ defmodule Tablet do
     table.data
     |> Enum.map(fn row -> for c <- table.keys, do: {c, format(table, c, row[c])} end)
     |> group_multi_column(table.keys, table.wrap_across)
-    |> Enum.with_index(fn rows, i -> table.style.(table, Map.put(context, :row, i), rows) end)
+    |> Enum.with_index(fn rows, i -> table.line_renderer.(table, %{context | row: i}, rows) end)
   end
 
   defp group_multi_column(data, keys, wrap_across)

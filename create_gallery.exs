@@ -11,9 +11,9 @@ Mix.install([{:tablet, path: "."}])
 defmodule Gallery do
   def styles() do
     Tablet.Styles.__info__(:functions)
-    |> Enum.filter(fn {_name, arity} -> arity == 3 end)
+    |> Enum.filter(fn {_name, arity} -> arity == 1 end)
     |> Enum.map(&elem(&1, 0))
-    |> Enum.reject(fn name -> name in [:generic_box] end)
+    |> Enum.reject(fn name -> name in [:generic_box, :resolve] end)
     |> Enum.sort()
   end
 
@@ -98,7 +98,7 @@ defmodule Gallery do
 
   defp style_docs(style) do
     with {_, _, _, _, _, _, function_docs} <- Code.fetch_docs(Tablet.Styles),
-         {_, _, _, %{"en" => docs}, _} <- List.keyfind(function_docs, {:function, style, 3}, 0) do
+         {_, _, _, %{"en" => docs}, _} <- List.keyfind(function_docs, {:function, style, 1}, 0) do
       # Trim the first to lines to not repeat the title
       docs |> String.split("\n") |> Enum.drop(2) |> Enum.join("\n")
     else

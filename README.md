@@ -93,7 +93,7 @@ to use the default conversion.
 
 ## Styling
 
-Various table output styles are supported by passing an atom or 3-arity
+Various table output styles are supported by passing an atom or 1-arity
 function to the  `:style` parameter.
 
 See the [Style Gallery](gallery.md) for the built-in styles.

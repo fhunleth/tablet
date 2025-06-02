@@ -81,12 +81,12 @@ defmodule TabletTest do
 
     data = generate_table(5, 2)
     assert_raise ArgumentError, fn -> Tablet.render(data, column_widths: 123) end
-    assert_raise ArgumentError, fn -> Tablet.render(data, context: []) end
     assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: :hello) end
     assert_raise ArgumentError, fn -> Tablet.render(data, formatter: "nope") end
     assert_raise ArgumentError, fn -> Tablet.render(data, keys: 1) end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: "yolo") end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: :invalid) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, style_options: nil) end
     assert_raise ArgumentError, fn -> Tablet.render(data, total_width: -1) end
     assert_raise ArgumentError, fn -> Tablet.render(data, wrap_across: 0) end
   end
@@ -94,6 +94,24 @@ defmodule TabletTest do
   test "compact style can be specified" do
     data = [%{id: 1, name: "Puck"}, %{id: 2, name: "Nick Bottom"}]
     output = capture_io(fn -> Tablet.puts(data, style: :compact, ansi_enabled?: false) end)
+
+    expected = """
+    :id  :name
+    1    Puck
+    2    Nick Bottom
+    """
+
+    assert removes_trailing_spaces(output) == expected
+  end
+
+  test "compact style can be specified as function" do
+    # Users should specify as an atom, but this checks that passing functions works
+    data = [%{id: 1, name: "Puck"}, %{id: 2, name: "Nick Bottom"}]
+
+    output =
+      capture_io(fn ->
+        Tablet.puts(data, style: &Tablet.Styles.compact/1, ansi_enabled?: false)
+      end)
 
     expected = """
     :id  :name

@@ -10,8 +10,8 @@ defmodule Tablet.Styles do
   @doc false
   @spec resolve(atom()) :: Tablet.style_function()
   def resolve(name) do
-    case function_exported?(__MODULE__, name, 3) do
-      true -> Function.capture(__MODULE__, name, 3)
+    case function_exported?(__MODULE__, name, 1) do
+      true -> Function.capture(__MODULE__, name, 1)
       false -> raise ArgumentError, "Not a built-in style: #{inspect(name)}"
     end
   end
@@ -22,9 +22,12 @@ defmodule Tablet.Styles do
   This style produces compact output by only underlining the header and adding
   whitespace around data. It is the default style.
   """
-  @spec compact(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
-          IO.ANSI.ansidata()
-  def compact(table, %{section: :header}, content) do
+  @spec compact(Tablet.t()) :: Tablet.t()
+  def compact(table) do
+    %{table | line_renderer: &compact_line/3}
+  end
+
+  defp compact_line(table, %{section: :header}, content) do
     [
       compact_title(table),
       content |> Enum.map(&compact_header(table, &1)) |> Enum.intersperse("   "),
@@ -32,11 +35,11 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def compact(table, %{section: :body}, content) do
+  defp compact_line(table, %{section: :body}, content) do
     [content |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
   end
 
-  def compact(_table, _context, _row) do
+  defp compact_line(_table, _context, _row) do
     # Nothing else
     []
   end
@@ -70,8 +73,12 @@ defmodule Tablet.Styles do
 
   Pass `style: :markdown` to `Tablet.puts/2` or `Tablet.render/2` to use.
   """
-  @spec markdown(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def markdown(table, %{section: :header}, content) do
+  @spec markdown(Tablet.t()) :: Tablet.t()
+  def markdown(table) do
+    %{table | line_renderer: &markdown_line/3}
+  end
+
+  defp markdown_line(table, %{section: :header}, content) do
     [
       markdown_title(table),
       content |> Enum.map(&markdown_row(table, &1)),
@@ -86,11 +93,11 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def markdown(table, %{section: :body}, content) do
+  defp markdown_line(table, %{section: :body}, content) do
     [content |> Enum.map(&markdown_row(table, &1)), "|\n"]
   end
 
-  def markdown(_table, _context, _row) do
+  defp markdown_line(_table, _context, _row) do
     # Nothing else
     []
   end
@@ -113,8 +120,8 @@ defmodule Tablet.Styles do
 
   To use, pass `style: :box` to `Tablet.puts/2` or `Tablet.render/2`.
   """
-  @spec box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def box(table, context, content) do
+  @spec box(Tablet.t()) :: Tablet.t()
+  def box(table) do
     border = %{
       h: "─",
       v: "|",
@@ -129,9 +136,7 @@ defmodule Tablet.Styles do
       lr: "+"
     }
 
-    new_context = Map.put(context, :border, border)
-
-    generic_box(table, new_context, content)
+    %{table | style_options: [border: border]} |> generic_box()
   end
 
   @doc """
@@ -142,9 +147,8 @@ defmodule Tablet.Styles do
 
   To use, pass `style: :unicode_box` to `Tablet.puts/2` or `Tablet.render/2`.
   """
-  @spec unicode_box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
-          IO.ANSI.ansidata()
-  def unicode_box(table, context, content) do
+  @spec unicode_box(Tablet.t()) :: Tablet.t()
+  def unicode_box(table) do
     border = %{
       h: "─",
       v: "│",
@@ -159,47 +163,49 @@ defmodule Tablet.Styles do
       lr: "┘"
     }
 
-    new_context = Map.put(context, :border, border)
-
-    generic_box(table, new_context, content)
+    %{table | style_options: [border: border]} |> generic_box()
   end
 
   @doc """
   Generic box style
 
   Render tabular data with whatever characters you want for borders. This is
-  used by the Box and Unicode Box styles. It's configurable via the `:context`
+  used by the Box and Unicode Box styles. It's configurable via the `:style_options`
   option as can be seen in the Box and Unicode Box implementations. Users can
-  also call this directly by passing `style: :generic_box` and `context: ...`.
+  also call this directly by passing `style: :generic_box` and `style_options: [border: ...]`.
 
-  The `:context` map must contain a key called `:border` that is a map with the
-  following fields:
-
-  * `:h` and `:v` - the horizontal and vertical characters
-  * `:ul` and `:ur` - upper left and upper right corners
-  * `:uc` - intersection of the horizontal top border with a vertical (looks like a T)
-  * `:ll` and `:lr` - lower left and lower right corners
-  * `:lc` - analogous to `:uc` except on the Nick Bottom border
-  * `:l` and `:r` - left and right side characters with horizontal lines towards the interior
-  * `:c` - interior horizontal and vertical intersection
+  Options:
+  * `:border` - a map with the  following fields:
+    * `:h` and `:v` - the horizontal and vertical characters
+    * `:ul` and `:ur` - upper left and upper right corners
+    * `:uc` - intersection of the horizontal top border with a vertical (looks like a T)
+    * `:ll` and `:lr` - lower left and lower right corners
+    * `:lc` - analogous to `:uc` except on the Nick Bottom border
+    * `:l` and `:r` - left and right side characters with horizontal lines towards the interior
+    * `:c` - interior horizontal and vertical intersection
   """
-  @spec generic_box(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) ::
-          IO.ANSI.ansidata()
-  def generic_box(table, %{section: :header, border: border}, content) do
+  @spec generic_box(Tablet.t()) :: Tablet.t()
+  def generic_box(table) do
+    border = Keyword.fetch!(table.style_options, :border)
+
+    %{table | line_renderer: &generic_box_line(&1, &2, &3, border)}
+  end
+
+  defp generic_box_line(table, %{section: :header}, content, border) do
     [
       generic_box_title(table, border, content),
       generic_box_row(table, content, border.v)
     ]
   end
 
-  def generic_box(table, %{section: :body, border: border}, content) do
+  defp generic_box_line(table, %{section: :body}, content, border) do
     [
       generic_box_border(table, content, border.l, border.c, border.r, border.h),
       generic_box_row(table, content, border.v)
     ]
   end
 
-  def generic_box(table, %{section: :footer, border: border}, row) do
+  defp generic_box_line(table, %{section: :footer}, row, border) do
     generic_box_border(table, row, border.ll, border.lc, border.lr, border.h)
   end
 
@@ -260,8 +266,12 @@ defmodule Tablet.Styles do
 
   To use, pass `style: :ledger` to `Tablet.puts/2` or `Tablet.render/2`.
   """
-  @spec ledger(Tablet.t(), Tablet.styling_context(), [IO.ANSI.ansidata()]) :: IO.ANSI.ansidata()
-  def ledger(table, %{section: :header}, content) do
+  @spec ledger(Tablet.t()) :: Tablet.t()
+  def ledger(table) do
+    %{table | line_renderer: &ledger_line/3}
+  end
+
+  defp ledger_line(table, %{section: :header}, content) do
     [
       :light_blue_background,
       :black,
@@ -273,7 +283,7 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def ledger(table, %{section: :body, row: n}, content) do
+  defp ledger_line(table, %{section: :body, row: n}, content) do
     color =
       if rem(n, 2) == 1, do: [:white_background, :black], else: [:light_black_background, :white]
 
@@ -286,7 +296,7 @@ defmodule Tablet.Styles do
     ]
   end
 
-  def ledger(_table, _context, _row) do
+  defp ledger_line(_table, _context, _row) do
     # Nothing else
     []
   end
