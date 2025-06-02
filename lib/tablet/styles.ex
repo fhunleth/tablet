@@ -24,7 +24,7 @@ defmodule Tablet.Styles do
   """
   @spec compact(Tablet.t()) :: Tablet.t()
   def compact(table) do
-    %{table | line_renderer: &compact_line/3}
+    %{table | style_padding: %{edge: 0, cell: 2, multi_column: 3}, line_renderer: &compact_line/3}
   end
 
   defp compact_line(table, %{section: :header}, content) do
@@ -75,7 +75,11 @@ defmodule Tablet.Styles do
   """
   @spec markdown(Tablet.t()) :: Tablet.t()
   def markdown(table) do
-    %{table | line_renderer: &markdown_line/3}
+    %{
+      table
+      | style_padding: %{edge: 4, cell: 3, multi_column: 3},
+        line_renderer: &markdown_line/3
+    }
   end
 
   defp markdown_line(table, %{section: :header}, content) do
@@ -188,7 +192,11 @@ defmodule Tablet.Styles do
   def generic_box(table) do
     border = Keyword.fetch!(table.style_options, :border)
 
-    %{table | line_renderer: &generic_box_line(&1, &2, &3, border)}
+    %{
+      table
+      | style_padding: %{edge: 4, cell: 3, multi_column: 3},
+        line_renderer: &generic_box_line(&1, &2, &3, border)
+    }
   end
 
   defp generic_box_line(table, %{section: :header}, content, border) do
@@ -268,7 +276,7 @@ defmodule Tablet.Styles do
   """
   @spec ledger(Tablet.t()) :: Tablet.t()
   def ledger(table) do
-    %{table | line_renderer: &ledger_line/3}
+    %{table | style_padding: %{edge: 2, cell: 2, multi_column: 3}, line_renderer: &ledger_line/3}
   end
 
   defp ledger_line(table, %{section: :header}, content) do
