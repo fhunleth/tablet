@@ -81,12 +81,12 @@ defmodule TabletTest do
 
     data = generate_table(5, 2)
     assert_raise ArgumentError, fn -> Tablet.render(data, column_widths: 123) end
-    assert_raise ArgumentError, fn -> Tablet.render(data, context: []) end
     assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: :hello) end
     assert_raise ArgumentError, fn -> Tablet.render(data, formatter: "nope") end
     assert_raise ArgumentError, fn -> Tablet.render(data, keys: 1) end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: "yolo") end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: :invalid) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, style_options: nil) end
     assert_raise ArgumentError, fn -> Tablet.render(data, total_width: -1) end
     assert_raise ArgumentError, fn -> Tablet.render(data, wrap_across: 0) end
   end
