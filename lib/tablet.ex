@@ -541,13 +541,14 @@ defmodule Tablet do
   end
 
   defp truncate_graphemes([], len, acc), do: {len, acc, nil}
+  defp truncate_graphemes(["\n" | _], _len, acc), do: {0, ["…" | acc], nil}
 
   defp truncate_graphemes([h | t], len, acc) do
     new_len = len - wcwidth(h)
 
     cond do
       new_len > 0 -> truncate_graphemes(t, new_len, [h | acc])
-      new_len == 0 and t == [] -> {0, acc, h}
+      new_len == 0 and (t == [] or t == ["\n"]) -> {0, acc, h}
       true -> {len - 1, ["…" | acc], nil}
     end
   end

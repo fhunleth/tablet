@@ -342,5 +342,12 @@ defmodule TabletTest do
       assert ftw("José", 10, :center) == ["   José   "]
       assert ftw("😀 👻 🐭", 10, :center) == [" 😀 👻 🐭 "]
     end
+
+    test "multi-line trims" do
+      text = "1. First thing\n2. Second thing\n3. Third thing"
+      assert ftw(text, 5, :left) == ["1. F…"]
+      assert ftw(text, 20, :left) == ["1. First thing…"]
+      assert ftw("Exact\n", 5, :left) == ["Exact"]
+    end
   end
 end
