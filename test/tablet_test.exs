@@ -291,10 +291,11 @@ defmodule TabletTest do
           total_width: 80
         )
 
-      # compact style uses 2 spaces between columns so 3 * (7+7+7+2+2) + 2 + 2 = 79
-      # 79 is the best we can do with multiple columns since there's no way to say
-      # that the 3rd run of all of the columns should have a different set of widths.
-      assert widths == %{id: 7, name: 7, age: 7}
+      # compact style uses 2 spaces between cells and 3 between multi-columns
+      # so 3 * (6+6+8+2+2) + 3 + 3 = 78 78 is the best we can do with multiple
+      # columns since there's no way to say that the 3rd run of all of the
+      # columns should have a different set of widths.
+      assert widths == %{id: 6, name: 6, age: 8}
     end
   end
 

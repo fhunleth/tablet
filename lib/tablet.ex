@@ -152,9 +152,13 @@ defmodule Tablet do
   Options are passed via the `:style_options` option which is included in the
   parameter.
 
-  For most styles, the callback should set:
+  For most styles, the callback should set at least:
 
-  * `:line_renderer` - callback to add borders, padding, etc.
+  * `:line_renderer` - a function that processes data for one line to the final output
+  * `:style_padding` - horizontal padding map.
+    * `:edge` - number of characters added on the left and right edges of the table
+    * `:cell` - number of characters added between two cells
+    * `:multi_column` - number of characters added between multi-column border cells
   """
   @type style_function() :: (t() -> t())
 
@@ -233,6 +237,10 @@ defmodule Tablet do
   * `:name` - the name or table title. This can be any `t:IO.ANSI.ansidata/0` value.
   * `:style` - one of the built-in styles or a function to style the table. The default is `:compact`.
   * `:style_options` - styling options. See style documentation for details.
+  * `:style_padding` - horizontal padding map
+    * `:edge` - number of characters added on the left and right edges of the table
+    * `:cell` - number of characters added between two cells
+    * `:multi_column` - number of characters added between multi-column border cells
   * `:total_width` - the width of the console for use when expanding columns. The default is 0 to autodetect.
   * `:wrap_across` - the number of columns to wrap across in multi-column mode. The default is 1.
   """
@@ -241,11 +249,16 @@ defmodule Tablet do
           data: [matching_map()],
           default_column_width: column_width(),
           formatter: formatter(),
-          line_renderer: line_renderer(),
           keys: nil | [key()],
+          line_renderer: line_renderer(),
           name: IO.ANSI.ansidata(),
           style: atom() | style_function(),
           style_options: keyword(),
+          style_padding: %{
+            edge: non_neg_integer(),
+            cell: non_neg_integer(),
+            multi_column: non_neg_integer()
+          },
           total_width: non_neg_integer(),
           wrap_across: pos_integer()
         }
@@ -258,13 +271,9 @@ defmodule Tablet do
             name: [],
             style: &Tablet.Styles.compact/1,
             style_options: [],
+            style_padding: %{edge: 1, cell: 2, multi_column: 2},
             total_width: 0,
             wrap_across: 1
-
-  # These are used in the cell expansion calculations. THey're hardcoded to compact style
-  # values, but could be figured out by probing the style function.
-  @style_intra_padding 2
-  @style_multi_column_padding 2
 
   @doc """
   Print a table to the console
@@ -324,6 +333,7 @@ defmodule Tablet do
     table =
       new([{:data, data} | options])
       |> fill_in_keys()
+      |> then(& &1.style.(&1))
       |> calculate_column_widths()
 
     table.column_widths
@@ -399,16 +409,17 @@ defmodule Tablet do
     if expanded_count > 0 do
       wrap_across = table.wrap_across
       non_expanded_width = non_expanded_widths |> Enum.map(&pre_expand_width/1) |> Enum.sum()
-      guessed_padding = (length(table.keys) - 1) * @style_intra_padding
 
-      guessed_width =
-        wrap_across * (non_expanded_width + guessed_padding) +
-          @style_multi_column_padding * (wrap_across - 1)
+      width =
+        wrap_across * non_expanded_width +
+          table.style_padding.edge +
+          wrap_across * (length(table.keys) - 1) * table.style_padding.cell +
+          (wrap_across - 1) * table.style_padding.multi_column
 
       total_width = if table.total_width > 0, do: table.total_width, else: terminal_width()
 
       # Make sure the columns don't go below 0
-      expansion = max(expanded_count * wrap_across, total_width - guessed_width)
+      expansion = max(expanded_count * wrap_across, total_width - width)
       expansion_each = div(expansion, expanded_count * wrap_across)
       leftover = rem(expansion, expanded_count * wrap_across) |> div(wrap_across)
       last_expansion = final_expansion(non_expanded_widths)

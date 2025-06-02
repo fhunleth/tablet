@@ -173,6 +173,36 @@ defmodule Tablet.UnicodeBoxStyleTest do
     assert output == expected
   end
 
+  test "multi-column expanding" do
+    data = generate_table(7, 3)
+
+    output =
+      Tablet.render(data,
+        name: "Multi-column Title",
+        style: :unicode_box,
+        column_widths: %{"key_3" => :expand},
+        total_width: 80,
+        wrap_across: 3
+      )
+      |> ansidata_to_string()
+
+    expected = """
+    ┌─────────────────────────────────────────────────────────────────────────────┐
+    │                             Multi-column Title                              │
+    ├─────────┬─────────┬─────┬─────────┬─────────┬─────┬─────────┬─────────┬─────┤
+    │ key_1   │ key_2   │ ke… │ key_1   │ key_2   │ ke… │ key_1   │ key_2   │ ke… │
+    ├─────────┼─────────┼─────┼─────────┼─────────┼─────┼─────────┼─────────┼─────┤
+    │ Charlie │ Delta   │ Ec… │ Alpha   │ Bravo   │ Ch… │ Delta   │ Echo    │ Al… │
+    ├─────────┼─────────┼─────┼─────────┼─────────┼─────┼─────────┼─────────┼─────┤
+    │ Delta   │ Echo    │ Al… │ Bravo   │ Charlie │ De… │         │         │     │
+    ├─────────┼─────────┼─────┼─────────┼─────────┼─────┼─────────┼─────────┼─────┤
+    │ Echo    │ Alpha   │ Br… │ Charlie │ Delta   │ Ec… │         │         │     │
+    └─────────┴─────────┴─────┴─────────┴─────────┴─────┴─────────┴─────────┴─────┘
+    """
+
+    assert output == expected
+  end
+
   test "Japanese content" do
     data = [
       %{名前: "山田太郎", 職業: "エンジニア", コメント: "よろしくお願いします。"},

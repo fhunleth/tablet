@@ -115,4 +115,28 @@ defmodule Tablet.CompactStyleTest do
 
     assert output == expected
   end
+
+  test "multi-column expanding" do
+    data = generate_table(7, 3)
+
+    output =
+      Tablet.render(data,
+        name: "Multi-column Title",
+        style: :compact,
+        column_widths: %{"key_3" => :expand},
+        total_width: 80,
+        wrap_across: 3
+      )
+      |> ansidata_to_string()
+
+    expected = """
+                                  Multi-column Title
+    key_1    key_2    key_3    key_1    key_2    key_3    key_1    key_2    key_3
+    Charlie  Delta    Echo     Alpha    Bravo    Charl…   Delta    Echo     Alpha
+    Delta    Echo     Alpha    Bravo    Charlie  Delta
+    Echo     Alpha    Bravo    Charlie  Delta    Echo
+    """
+
+    assert output == expected
+  end
 end
