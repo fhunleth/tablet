@@ -332,11 +332,12 @@ defmodule TabletTest do
   end
 
   defp ftw(ansidata, len, justification) when is_integer(len) do
-    fit(ansidata, {len, 1}, justification)
+    [one_line] = fit(ansidata, {len, 1}, justification)
+    one_line
   end
 
   defp fit(ansidata, size, justification) when is_tuple(size) do
-    Tablet.fit(ansidata, size, justification) |> Tablet.simplify()
+    Tablet.fit(ansidata, size, justification) |> Enum.map(&Tablet.simplify/1)
   end
 
   describe "fit/3" do
@@ -387,15 +388,26 @@ defmodule TabletTest do
     test "one-line multi-line-input trims" do
       text = "1. First thing\n2. Second thing\n3. Third thing"
       assert ftw(text, 5, :left) == ["1. F…"]
-      assert ftw(text, 20, :left) == ["1. First thing…"]
+      assert ftw(text, 20, :left) == ["1. First thing      "]
       assert ftw("Exact\n", 5, :left) == ["Exact"]
     end
 
     test "multi-line string trims" do
       text = "1. First thing\n2. Second thing\n3. Third thing"
-      assert fit(text, {5, 2}, :left) == ["1. F…\n2. S…"]
-      assert fit(text, {20, 2}, :left) == ["1. First thing…\n2. Second thing"]
-      assert fit(text, {20, 3}, :left) == ["1. First thing…\n2. Second thing\n3. Third thing"]
+      assert fit(text, {5, 2}, :left) == [["1. F…"], ["2. S…"]]
+      assert fit(text, {20, 2}, :left) == [["1. First thing      "], ["2. Second thing     "]]
+
+      assert fit(text, {20, 3}, :left) == [
+               ["1. First thing      "],
+               ["2. Second thing     "],
+               ["3. Third thing      "]
+             ]
+
+      assert fit("Hello", {20, 3}, :left) == [
+               ["Hello               "],
+               ["                    "],
+               ["                    "]
+             ]
     end
   end
 end

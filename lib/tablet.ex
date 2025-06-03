@@ -541,9 +541,15 @@ defmodule Tablet do
   """
   @spec fit(IO.ANSI.ansidata(), {pos_integer(), pos_integer()}, justification()) ::
           IO.ANSI.ansidata()
-  def fit(ansidata, {w, _h}, justification) when is_integer(w) do
-    {trimmed, excess} = ansidata |> flatten() |> truncate(w, [])
-    pad(trimmed, excess, justification)
+  def fit(ansidata, {w, h}, justification) when is_integer(w) do
+    ansidata
+    |> flatten()
+    |> break_into_lines()
+    |> Enum.take(h)
+    |> Enum.map(fn line ->
+      {trimmed, excess} = truncate(line, w, [])
+      pad(trimmed, excess, justification)
+    end)
   end
 
   # Flatten ansidata to a list of strings and ANSI codes
@@ -551,6 +557,29 @@ defmodule Tablet do
   defp flatten([], acc), do: acc
   defp flatten([h | t], acc), do: flatten(t, flatten(h, acc))
   defp flatten(a, acc), do: [a | acc]
+
+  # Input: ansidata, output: list of ansidata split into lines
+  # ANSI codes are re-issued on each line to preserve ANSI state when interleaved with other cells
+  defp break_into_lines(ansidata), do: break_into_lines(ansidata, [], [], [])
+
+  defp break_into_lines([], current, lines, _ansi),
+    do: Enum.reverse([Enum.reverse(current) | lines])
+
+  defp break_into_lines(["" | t], current, lines, ansi),
+    do: break_into_lines(t, current, lines, ansi)
+
+  defp break_into_lines([h | t], current, lines, ansi) when is_binary(h) do
+    case String.split(h, "\n", parts: 2) do
+      [line] ->
+        break_into_lines(t, [line | current], lines, ansi)
+
+      [line, rest] ->
+        break_into_lines([rest | t], ansi, [Enum.reverse([line | current]) | lines], ansi)
+    end
+  end
+
+  defp break_into_lines([h | t], current, lines, ansi),
+    do: break_into_lines(t, [h | current], lines, [h | ansi])
 
   # Truncate flattened ansidata and add ellipsis if needed
   defp truncate([], len, acc), do: {Enum.reverse(acc), len}
