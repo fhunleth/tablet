@@ -541,16 +541,22 @@ defmodule Tablet do
   """
   @spec fit(IO.ANSI.ansidata(), {pos_integer(), pos_integer()}, justification()) ::
           IO.ANSI.ansidata()
-  def fit(ansidata, {w, h}, justification) when is_integer(w) do
+  def fit(ansidata, {w, h}, justification)
+      when is_integer(w) and w >= 0 and is_integer(h) and h > 0 do
     ansidata
     |> flatten()
     |> break_into_lines()
-    |> Enum.take(h)
+    |> pad_lines(h)
     |> Enum.map(fn line ->
       {trimmed, excess} = truncate(line, w, [])
       pad(trimmed, excess, justification)
     end)
   end
+
+  # Take the first n lines and if there aren't n lines, add empty lines
+  defp pad_lines(_, 0), do: []
+  defp pad_lines([h | t], n), do: [h | pad_lines(t, n - 1)]
+  defp pad_lines([], n), do: [[] | pad_lines([], n - 1)]
 
   # Flatten ansidata to a list of strings and ANSI codes
   defp flatten(ansidata), do: flatten(ansidata, []) |> Enum.reverse()
