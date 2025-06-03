@@ -207,7 +207,7 @@ defmodule Tablet do
   information to do more complicated things like match on even or odd lines and
   more if needed.
   """
-  @type line_renderer() :: (line_context(), [IO.ANSI.ansidata()] -> IO.ANSI.ansidata())
+  @type line_renderer() :: (t(), line_context(), [IO.ANSI.ansidata()] -> IO.ANSI.ansidata())
 
   @typedoc """
   Data formatter callback function
