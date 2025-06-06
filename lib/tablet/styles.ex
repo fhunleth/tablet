@@ -35,8 +35,9 @@ defmodule Tablet.Styles do
     ]
   end
 
-  defp compact_line(table, %{section: :body}, content) do
-    [content |> Enum.map(&compact_row(table, &1)) |> Enum.intersperse("   "), "\n"]
+  defp compact_line(_table, %{section: :body}, content) do
+    # 2 spaces between columns; 3 spaces between multi-column rows
+    [content |> Enum.map(&Enum.intersperse(&1, "  ")) |> Enum.intersperse("   "), "\n"]
   end
 
   defp compact_line(_table, _context, _row) do
@@ -51,18 +52,9 @@ defmodule Tablet.Styles do
     [Tablet.fit(table.name, {w, 1}, :center), "\n"]
   end
 
-  defp compact_header(table, header) do
+  defp compact_header(_table, header) do
     header
-    |> Enum.map(fn {c, v} ->
-      width = table.column_widths[c]
-      [:underline, Tablet.fit(v, {width, 1}, :left), :no_underline]
-    end)
-    |> Enum.intersperse("  ")
-  end
-
-  defp compact_row(table, row) do
-    row
-    |> Enum.map(fn {c, v} -> Tablet.fit(v, {table.column_widths[c], 1}, :left) end)
+    |> Enum.map(fn v -> [:underline, v, :no_underline] end)
     |> Enum.intersperse("  ")
   end
 
@@ -85,20 +77,13 @@ defmodule Tablet.Styles do
   defp markdown_line(table, %{section: :header}, content) do
     [
       markdown_title(table),
-      content |> Enum.map(&markdown_row(table, &1)),
-      "|\n",
-      content
-      |> List.flatten()
-      |> Enum.map(fn {c, _v} ->
-        width = table.column_widths[c]
-        ["| ", String.duplicate("-", width), " "]
-      end),
-      "|\n"
+      [content |> Enum.map(&markdown_row/1), "|\n"],
+      [content |> Enum.map(&markdown_separator/1), "|\n"]
     ]
   end
 
-  defp markdown_line(table, %{section: :body}, content) do
-    [content |> Enum.map(&markdown_row(table, &1)), "|\n"]
+  defp markdown_line(_table, %{section: :body}, content) do
+    [content |> Enum.map(&markdown_row/1), "|\n"]
   end
 
   defp markdown_line(_table, _context, _row) do
@@ -109,11 +94,15 @@ defmodule Tablet.Styles do
   defp markdown_title(%{name: []} = _table), do: []
   defp markdown_title(table), do: ["## ", table.name, "\n\n"]
 
-  defp markdown_row(table, row) do
-    Enum.map(row, fn {c, v} ->
-      width = table.column_widths[c]
-      ["| ", Tablet.fit(v, {width, 1}, :left), " "]
+  defp markdown_separator(row) do
+    Enum.map(row, fn v ->
+      {width, _} = Tablet.visual_size(v)
+      ["| ", String.duplicate("-", width), " "]
     end)
+  end
+
+  defp markdown_row(row) do
+    Enum.map(row, fn v -> ["| ", v, " "] end)
   end
 
   @doc """
@@ -243,28 +232,25 @@ defmodule Tablet.Styles do
       (table.wrap_across - 1) * between_multi
   end
 
-  defp generic_box_row(table, row, vertical) do
-    items =
-      row
-      |> List.flatten()
-      |> Enum.map(fn {c, v} ->
-        width = table.column_widths[c]
-        [" ", Tablet.fit(v, {width, 1}, :left), " ", vertical]
-      end)
-
-    [vertical, items, "\n"]
+  defp generic_box_row(_table, rows, vertical) do
+    [vertical, Enum.map(rows, &generic_box_row_set(&1, vertical)), "\n"]
   end
 
-  defp generic_box_border(table, row, left_char, middle_char, right_char, line_char) do
-    lines =
-      row
-      |> List.flatten()
-      |> Enum.map(fn {c, _v} ->
-        width = table.column_widths[c]
-        [String.duplicate(line_char, width + 2)]
-      end)
+  defp generic_box_row_set(row, vertical) do
+    Enum.map(row, fn v -> [" ", v, " ", vertical] end)
+  end
+
+  defp generic_box_border(_table, row, left_char, middle_char, right_char, line_char) do
+    lines = Enum.flat_map(row, &generic_box_border_set(&1, line_char))
 
     [left_char, Enum.intersperse(lines, middle_char), right_char, "\n"]
+  end
+
+  defp generic_box_border_set(row, line_char) do
+    Enum.map(row, fn v ->
+      {width, _} = Tablet.visual_size(v)
+      [String.duplicate(line_char, width + 2)]
+    end)
   end
 
   @doc """
@@ -324,10 +310,7 @@ defmodule Tablet.Styles do
     ]
   end
 
-  defp ledger_row(table, row) do
-    Enum.map(row, fn {c, v} ->
-      width = table.column_widths[c]
-      [" ", Tablet.fit(v, {width, 1}, :left), " "]
-    end)
+  defp ledger_row(_table, row) do
+    Enum.map(row, fn v -> [" ", v, " "] end)
   end
 end

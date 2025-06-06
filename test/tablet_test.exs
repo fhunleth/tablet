@@ -82,8 +82,12 @@ defmodule TabletTest do
     data = generate_table(5, 2)
     assert_raise ArgumentError, fn -> Tablet.render(data, column_widths: 123) end
     assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: :hello) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: -1) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, default_row_height: :hello) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, default_row_height: 0) end
     assert_raise ArgumentError, fn -> Tablet.render(data, formatter: "nope") end
     assert_raise ArgumentError, fn -> Tablet.render(data, keys: 1) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, row_heights: 123) end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: "yolo") end
     assert_raise ArgumentError, fn -> Tablet.render(data, style: :invalid) end
     assert_raise ArgumentError, fn -> Tablet.render(data, style_options: nil) end
@@ -204,6 +208,50 @@ defmodule TabletTest do
     枣子 🌴    Sureau 🍇   りんご 🍎                  Plátano 🍌
     Sureau 🍇  りんご 🍎   Plátano 🍌                 체리 🍒
     りんご 🍎  Plátano 🍌  체리 🍒                    枣子 🌴
+    """
+
+    assert output == expected
+  end
+
+  test "fixed height rows" do
+    data = generate_table(3, 5)
+
+    output =
+      Tablet.render(data, default_row_height: 2)
+      |> ansidata_to_string()
+
+    expected = """
+    key_1  key_2  key_3  key_4  key_5
+    1,1    1,2    1,3    1,4    1,5
+
+    2,1    2,2    2,3    2,4    2,5
+
+    3,1    3,2    3,3    3,4    3,5
+
+    """
+
+    assert output == expected
+  end
+
+  test "various height rows" do
+    data = [
+      %{key: "a", value: "one line"},
+      %{key: "b", value: "two\nlines"},
+      %{key: "c", value: "three\nlines\nhere"}
+    ]
+
+    output =
+      Tablet.render(data)
+      |> ansidata_to_string()
+
+    expected = """
+    :key  :value
+    a     one line
+    b     two
+          lines
+    c     three
+          lines
+          here
     """
 
     assert output == expected

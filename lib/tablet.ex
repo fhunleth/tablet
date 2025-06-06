@@ -168,9 +168,12 @@ defmodule Tablet do
   The context is a simple map with fields that Tablet adds for conveying the
   section and row number that it's on. Row numbers start at 0. For normally
   rendered tables (`:wrap_across` unset or set to 1), the row number
-  corresponds to the same element in the input data. For multi-column tables,
-  Tablet groups input rows that go on the same line together to form a new
-  table internally and the row number corresponds to rows in this table.
+  corresponds to row in the input data. For multi-column tables, the row
+  is the left-most row in the group of rows that are rendered together.
+
+  The `:slice` field indicates which line is being rendered within the row. For
+  single line rows, it will be 0. For multi-line rows, it will be 0 for the first
+  line, then 1, etc.
 
   Note that the line rendering function can output many lines of text per one input
   line. This is useful for adding borders.
@@ -178,7 +181,7 @@ defmodule Tablet do
   @type line_context() :: %{
           section: :header | :body | :footer,
           row: non_neg_integer(),
-          n: non_neg_integer()
+          slice: non_neg_integer()
         }
 
   @typedoc """
@@ -231,6 +234,7 @@ defmodule Tablet do
   * `:data` - data rows
   * `:column_widths` - a map of keys to their desired column widths. See `t:column_width/0`.
   * `:keys` - a list of keys to include in the table for each record. The order is reflected in the rendered table. Optional
+  * `:default_row_height` - row height to use when unspecified in `:row_heights`. Defaults to `:minimum`
   * `:default_column_width` - column width to use when unspecified in `:column_widths`. Defaults to `:minimum`
   * `:formatter` - a function to format the data in the table. The default is to convert everything to strings.
   * `:line_renderer` - a function that processes data for one line to the final output
@@ -248,7 +252,8 @@ defmodule Tablet do
   @type t :: %__MODULE__{
           column_widths: %{key() => column_width()},
           data: [matching_map()],
-          default_column_width: column_width(),
+          default_row_height: pos_integer() | :minimum,
+          default_column_width: pos_integer() | :minimum | :expand,
           formatter: formatter(),
           keys: nil | [key()],
           line_renderer: line_renderer(),
@@ -267,6 +272,7 @@ defmodule Tablet do
   defstruct column_widths: %{},
             data: [],
             default_column_width: :minimum,
+            default_row_height: :minimum,
             formatter: &Tablet.always_default_formatter/2,
             keys: nil,
             line_renderer: nil,
@@ -349,9 +355,11 @@ defmodule Tablet do
         :column_widths,
         :context,
         :default_column_width,
+        :default_row_height,
         :formatter,
         :keys,
         :name,
+        :row_heights,
         :style,
         :style_options,
         :total_width,
@@ -367,12 +375,17 @@ defmodule Tablet do
   defp normalize({:context, v} = opt) when is_map(v), do: opt
 
   defp normalize({:default_column_width, v} = opt)
-       when is_integer(v) or v in [:expand, :minimum, :default],
+       when (is_integer(v) and v >= 0) or v in [:expand, :minimum],
+       do: opt
+
+  defp normalize({:default_row_height, v} = opt)
+       when (is_integer(v) and v > 0) or v == :minimum,
        do: opt
 
   defp normalize({:formatter, v} = opt) when is_function(v, 2), do: opt
   defp normalize({:keys, v} = opt) when is_list(v), do: opt
   defp normalize({:name, v} = opt) when is_binary(v) or is_list(v), do: opt
+  defp normalize({:row_heights, v} = opt) when is_list(v), do: opt
   defp normalize({:style, v} = opt) when is_function(v, 2), do: opt
   defp normalize({:style, v}) when is_atom(v), do: {:style, Styles.resolve(v)}
   defp normalize({:style_options, v} = opt) when is_list(v), do: opt
@@ -470,17 +483,20 @@ defmodule Tablet do
 
   defp to_ansidata(table) do
     table = table |> fill_in_keys() |> table.style.() |> calculate_column_widths()
-    n = length(table.data)
 
     header =
       table.keys
-      |> Enum.map(fn c -> {c, format(table, :__header__, c)} end)
+      |> Enum.map(fn c ->
+        s = format(table, :__header__, c)
+        width = table.column_widths[c]
+        Tablet.fit(s, {width, 1}, :left)
+      end)
       |> List.duplicate(table.wrap_across)
 
     [
-      table.line_renderer.(table, %{section: :header, row: 0, n: n}, header),
-      render_rows(table, %{section: :body, row: 0, n: n}),
-      table.line_renderer.(table, %{section: :footer, row: 0, n: n}, header)
+      table.line_renderer.(table, %{section: :header, row: 0, slice: 0}, header),
+      render_rows(table, %{section: :body, row: 0, slice: 0}),
+      table.line_renderer.(table, %{section: :footer, row: 0, slice: 0}, header)
     ]
   end
 
@@ -491,7 +507,40 @@ defmodule Tablet do
     table.data
     |> Enum.map(fn row -> for c <- table.keys, do: {c, format(table, c, row[c])} end)
     |> group_multi_column(table.keys, table.wrap_across)
-    |> Enum.with_index(fn rows, i -> table.line_renderer.(table, %{context | row: i}, rows) end)
+    |> Enum.with_index(fn rows, i ->
+      render_line(table, %{context | row: i}, rows)
+    end)
+  end
+
+  defp render_line(table, context, rows) do
+    height =
+      case table.default_row_height do
+        :minimum -> Enum.reduce(rows, 1, &max(&2, row_height(&1)))
+        h -> h
+      end
+
+    fit_rows = fit_all_cells(table, rows, height)
+    sliced_rows = fit_rows |> Enum.map(&zip_lists/1) |> zip_lists()
+
+    Enum.with_index(sliced_rows, fn rows, i ->
+      table.line_renderer.(table, %{context | slice: i}, rows)
+    end)
+  end
+
+  defp zip_lists(l), do: Enum.zip_with(l, &Function.identity/1)
+
+  defp row_height(row) do
+    Enum.reduce(row, 1, fn {_, v}, acc -> max(acc, visual_height(v)) end)
+  end
+
+  defp fit_all_cells(table, rows, height) do
+    rows
+    |> Enum.map(fn row ->
+      Enum.map(row, fn {c, v} ->
+        width = table.column_widths[c]
+        Tablet.fit(v, {width, height}, :left)
+      end)
+    end)
   end
 
   defp group_multi_column(data, keys, wrap_across)
@@ -690,6 +739,11 @@ defmodule Tablet do
   defp visual_width(ansidata) do
     {width, _height} = visual_size(ansidata)
     width
+  end
+
+  defp visual_height(ansidata) do
+    {_width, height} = visual_size(ansidata)
+    height
   end
 
   # Add up the character widths and newlines
