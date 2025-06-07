@@ -173,10 +173,10 @@ defmodule Tablet.LedgerStyleTest do
 
     expected = """
                                    Multi-column Title
-     key_1  key_2  key_3        key_1  key_2  key_3        key_1  key_2  key_3
-     1,1    1,2    1,3          4,1    4,2    4,3          7,1    7,2    7,3
-     2,1    2,2    2,3          5,1    5,2    5,3
-     3,1    3,2    3,3          6,1    6,2    6,3
+     key_1    key_2    key_3    key_1    key_2    key_3    key_1    key_2    key_3
+     Charlie  Delta    Echo     Alpha    Bravo    Charl…   Delta    Echo     Alpha
+     Delta    Echo     Alpha    Bravo    Charlie  Delta
+     Echo     Alpha    Bravo    Charlie  Delta    Echo
     """
 
     assert output == expected

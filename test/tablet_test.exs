@@ -221,12 +221,12 @@ defmodule TabletTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1  key_2  key_3  key_4  key_5
-    1,1    1,2    1,3    1,4    1,5
+    key_1    key_2  key_3  key_4    key_5
+    Charlie  Delta  Echo   Alpha    Bravo
 
-    2,1    2,2    2,3    2,4    2,5
+    Delta    Echo   Alpha  Bravo    Charlie
 
-    3,1    3,2    3,3    3,4    3,5
+    Echo     Alpha  Bravo  Charlie  Delta
 
     """
 
