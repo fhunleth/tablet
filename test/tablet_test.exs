@@ -173,35 +173,37 @@ defmodule TabletTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1  key_2   key_1  key_2   key_1  key_2
-    1,1    1,2     11,1   11,2    21,1   21,2
-    2,1    2,2     12,1   12,2    22,1   22,2
-    3,1    3,2     13,1   13,2    23,1   23,2
-    4,1    4,2     14,1   14,2    24,1   24,2
-    5,1    5,2     15,1   15,2    25,1   25,2
-    6,1    6,2     16,1   16,2    26,1   26,2
-    7,1    7,2     17,1   17,2    27,1   27,2
-    8,1    8,2     18,1   18,2    28,1   28,2
-    9,1    9,2     19,1   19,2
-    10,1   10,2    20,1   20,2
+    key_1    key_2     key_1    key_2     key_1    key_2
+    Charlie  Delta     Charlie  Delta     Charlie  Delta
+    Delta    Echo      Delta    Echo      Delta    Echo
+    Echo     Alpha     Echo     Alpha     Echo     Alpha
+    Alpha    Bravo     Alpha    Bravo     Alpha    Bravo
+    Bravo    Charlie   Bravo    Charlie   Bravo    Charlie
+    Charlie  Delta     Charlie  Delta     Charlie  Delta
+    Delta    Echo      Delta    Echo      Delta    Echo
+    Echo     Alpha     Echo     Alpha     Echo     Alpha
+    Alpha    Bravo     Alpha    Bravo
+    Bravo    Charlie   Bravo    Charlie
     """
 
     assert output == expected
   end
 
   test "expanding columns" do
-    data = generate_table(4, 4)
+    data = generate_table(4, 4, :unicode)
+
+    key3 = hd(data) |> Map.keys() |> Enum.at(2)
 
     output =
-      Tablet.render(data, column_widths: %{"key_2" => :expand}, total_width: 60)
+      Tablet.render(data, column_widths: %{key3 => :expand}, total_width: 60)
       |> ansidata_to_string()
 
     expected = """
-    key_1  key_2                                    key_3  key_4
-    1,1    1,2                                      1,3    1,4
-    2,1    2,2                                      2,3    2,4
-    3,1    3,2                                      3,3    3,4
-    4,1    4,2                                      4,3    4,4
+    キー_1     キー_2      キー_3                     キー_4
+    체리 🍒    枣子 🌴     Sureau 🍇                  りんご 🍎
+    枣子 🌴    Sureau 🍇   りんご 🍎                  Plátano 🍌
+    Sureau 🍇  りんご 🍎   Plátano 🍌                 체리 🍒
+    りんご 🍎  Plátano 🍌  체리 🍒                    枣子 🌴
     """
 
     assert output == expected

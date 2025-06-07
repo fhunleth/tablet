@@ -23,14 +23,25 @@ defmodule TestUtilities do
   end
 
   @doc false
-  @spec generate_table(non_neg_integer(), non_neg_integer()) :: [map()]
-  def generate_table(rows, columns) do
+  @spec generate_table(non_neg_integer(), non_neg_integer(), :ascii | :unicode) :: [map()]
+  def generate_table(rows, columns, style \\ :ascii) do
     for r <- 1..rows do
       for c <- 1..columns, into: %{} do
-        {"key_#{c}", "#{r},#{c}"}
+        {key(c, style), value(r, c, style)}
       end
     end
   end
+
+  defp key(c, :ascii), do: "key_#{c}"
+  defp key(c, :unicode), do: "キー_#{c}"
+
+  @ascii_words {"Alpha", "Bravo", "Charlie", "Delta", "Echo"}
+  @unicode_words {"りんご 🍎", "Plátano 🍌", "체리 🍒", "枣子 🌴", "Sureau 🍇"}
+
+  defp value(r, c, :ascii), do: tuple_index(@ascii_words, r + c)
+  defp value(r, c, :unicode), do: tuple_index(@unicode_words, r + c)
+
+  defp tuple_index(tuple, index), do: elem(tuple, rem(index, tuple_size(tuple)))
 
   @doc false
   @spec removes_trailing_spaces(String.t()) :: String.t()
