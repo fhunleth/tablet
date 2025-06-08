@@ -247,7 +247,7 @@ defmodule Tablet do
   @type t :: %__MODULE__{
           column_widths: %{key() => column_width()},
           data: [matching_map()],
-          default_column_width: column_width(),
+          default_column_width: non_neg_integer() | :minimum | :expand,
           formatter: formatter(),
           keys: nil | [key()],
           line_renderer: line_renderer(),
