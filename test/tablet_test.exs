@@ -81,7 +81,7 @@ defmodule TabletTest do
 
     data = generate_table(5, 2)
     assert_raise ArgumentError, fn -> Tablet.render(data, column_widths: 123) end
-    assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: :hello) end
+    assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: :default) end
     assert_raise ArgumentError, fn -> Tablet.render(data, default_column_width: -1) end
     assert_raise ArgumentError, fn -> Tablet.render(data, formatter: "nope") end
     assert_raise ArgumentError, fn -> Tablet.render(data, keys: 1) end
