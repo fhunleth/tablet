@@ -76,6 +76,39 @@ defmodule TabletTest do
     assert result == "\n"
   end
 
+  test "format data types" do
+    data = [
+      %{type: :string, value: "Hello, world"},
+      %{type: :integer, value: 42},
+      %{type: :float, value: 3.14},
+      %{type: :boolean, value: true},
+      %{type: :tuple, value: {1, 2, 3}},
+      %{type: :atom, value: :example},
+      %{type: nil, value: nil},
+      %{type: :date, value: ~D[2023-10-01]},
+      %{type: :time, value: ~T[12:34:56]},
+      %{type: :datetime, value: ~N[2023-10-01 12:34:56]}
+    ]
+
+    expected_output = """
+    :type      :value
+    :string    Hello, world
+    :integer   42
+    :float     3.14
+    :boolean   true
+    :tuple     {1, 2, 3}
+    :atom      :example
+
+    :date      2023-10-01
+    :time      12:34:56
+    :datetime  2023-10-01 12:34:56
+    """
+
+    output = Tablet.render(data)
+
+    assert ansidata_to_string(output) == expected_output
+  end
+
   test "invalid parameters" do
     assert_raise ArgumentError, fn -> Tablet.render(1000) end
 

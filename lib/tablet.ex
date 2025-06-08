@@ -520,12 +520,16 @@ defmodule Tablet do
   end
 
   defp default_format(_id, data) when is_list(data) or is_binary(data), do: data
-  defp default_format(_id, data) when is_integer(data), do: Integer.to_string(data)
-  defp default_format(_id, data) when is_float(data), do: Float.to_string(data)
-  defp default_format(_id, data) when is_map(data), do: inspect(data)
   defp default_format(_id, nil), do: ""
   defp default_format(_id, data) when is_atom(data), do: inspect(data)
   defp default_format(_id, data) when is_tuple(data), do: inspect(data)
+
+  defp default_format(_id, data) do
+    case String.Chars.impl_for(data) do
+      nil -> inspect(data)
+      mod -> mod.to_string(data)
+    end
+  end
 
   @doc """
   Fit ansidata into the specified number of characters
