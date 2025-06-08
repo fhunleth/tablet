@@ -379,7 +379,6 @@ defmodule Tablet do
     raise ArgumentError, "Unexpected value passed to #{inspect(key)}: #{inspect(value)}"
   end
 
-  defp normalize_data(nil), do: []
   defp normalize_data([row | _] = d) when is_map(row), do: d
   defp normalize_data(d) when is_list(d), do: Enum.map(d, &Map.new(&1))
 
@@ -388,10 +387,9 @@ defmodule Tablet do
   end
 
   defp fill_in_keys(table) do
-    cond do
-      table.keys -> table
-      table.data -> %{table | keys: keys_from_data(table.data)}
-      true -> %{table | keys: []}
+    case table.keys do
+      nil -> %{table | keys: keys_from_data(table.data)}
+      _ -> table
     end
   end
 

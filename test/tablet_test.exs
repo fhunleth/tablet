@@ -94,7 +94,11 @@ defmodule TabletTest do
 
   test "compact style can be specified" do
     data = [%{id: 1, name: "Puck"}, %{id: 2, name: "Nick Bottom"}]
-    output = capture_io(fn -> Tablet.puts(data, style: :compact, ansi_enabled?: false) end)
+
+    output =
+      capture_io(fn ->
+        Tablet.puts(data, style: :compact, style_options: [], ansi_enabled?: false)
+      end)
 
     expected = """
     :id  :name

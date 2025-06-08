@@ -16,13 +16,6 @@ defmodule TestUtilities do
   end
 
   @doc false
-  @spec puts(IO.ANSI.ansidata()) :: :ok
-  def puts(ansidata) do
-    # Quick table printer when debugging tests.
-    IO.puts(["\n\n", "==========\n", IO.ANSI.format(ansidata), "==========\n"])
-  end
-
-  @doc false
   @spec generate_table(non_neg_integer(), non_neg_integer(), :ascii | :unicode) :: [map()]
   def generate_table(rows, columns, style \\ :ascii) do
     for r <- 1..rows do
