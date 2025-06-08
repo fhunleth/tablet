@@ -364,7 +364,7 @@ defmodule Tablet do
   defp normalize({:context, v} = opt) when is_map(v), do: opt
 
   defp normalize({:default_column_width, v} = opt)
-       when is_integer(v) or v in [:expand, :minimum, :default],
+       when (is_integer(v) and v >= 0) or v in [:expand, :minimum, :default],
        do: opt
 
   defp normalize({:formatter, v} = opt) when is_function(v, 2), do: opt
