@@ -3,6 +3,7 @@
 [![Hex version](https://img.shields.io/hexpm/v/tablet.svg "Hex version")](https://hex.pm/packages/tablet)
 [![API docs](https://img.shields.io/hexpm/v/tablet.svg?label=hexdocs "API docs")](https://hexdocs.pm/tablet/Tablet.html)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/fhunleth/tablet/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/fhunleth/tablet/tree/main)
+[![Coverage Status](https://coveralls.io/repos/github/fhunleth/tablet/badge.svg)](https://coveralls.io/github/fhunleth/tablet)
 [![REUSE status](https://api.reuse.software/badge/github.com/fhunleth/tablet)](https://api.reuse.software/info/github.com/fhunleth/tablet)
 
 Tablet renders tabular data as text for output to the console or any
