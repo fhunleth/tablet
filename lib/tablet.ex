@@ -177,8 +177,7 @@ defmodule Tablet do
   """
   @type line_context() :: %{
           section: :header | :body | :footer,
-          row: non_neg_integer(),
-          n: non_neg_integer()
+          row: non_neg_integer()
         }
 
   @typedoc """
@@ -467,7 +466,6 @@ defmodule Tablet do
 
   defp to_ansidata(table) do
     table = table |> fill_in_keys() |> table.style.() |> calculate_column_widths()
-    n = length(table.data)
 
     header =
       table.keys
@@ -475,9 +473,9 @@ defmodule Tablet do
       |> List.duplicate(table.wrap_across)
 
     [
-      table.line_renderer.(table, %{section: :header, row: 0, n: n}, header),
-      render_rows(table, %{section: :body, row: 0, n: n}),
-      table.line_renderer.(table, %{section: :footer, row: 0, n: n}, header)
+      table.line_renderer.(table, %{section: :header, row: 0}, header),
+      render_rows(table, %{section: :body, row: 0}),
+      table.line_renderer.(table, %{section: :footer, row: 0}, header)
     ]
   end
 
