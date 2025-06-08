@@ -463,12 +463,15 @@ defmodule TabletTest do
 
     test "one-line ansidata trims" do
       s = [:red, "He", "l", [:green | "lo"]]
-      assert fit(s, {5, 1}, :left) == [[:red, "Hel", :green, "lo"]]
-      assert fit(s, {4, 1}, :left) == [[:red, "Hel", :green, "…"]]
-      assert fit(s, {3, 1}, :left) == [[:red, "He…", :green]]
-      assert fit(s, {2, 1}, :left) == [[:red, "H…", :green]]
-      assert fit(s, {1, 1}, :left) == [[:red, "…", :green]]
-      assert fit(s, {0, 1}, :left) == [[:red, :green]]
+
+      for j <- [:left, :right, :center] do
+        assert fit(s, {5, 1}, j) == [[:red, "Hel", :green, "lo"]]
+        assert fit(s, {4, 1}, j) == [[:red, "Hel", :green, "…"]]
+        assert fit(s, {3, 1}, j) == [[:red, "He…", :green]]
+        assert fit(s, {2, 1}, j) == [[:red, "H…", :green]]
+        assert fit(s, {1, 1}, j) == [[:red, "…", :green]]
+        assert fit(s, {0, 1}, j) == [[:red, :green]]
+      end
     end
 
     test "one-line left justifies" do
