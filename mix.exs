@@ -54,7 +54,8 @@ defmodule Tablet.MixProject do
         "mix.exs",
         "NOTICE",
         "README.md",
-        "REUSE.toml"
+        "REUSE.toml",
+        "usage-rules.md"
       ],
       licenses: ["Apache-2.0"],
       links: %{

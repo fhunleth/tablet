@@ -11,7 +11,8 @@ path = [
  "NOTICE",
  "REUSE.toml",
  "mix.exs",
- "mix.lock"
+ "mix.lock",
+ "usage-rules.md"
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "None"
