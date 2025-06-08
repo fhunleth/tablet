@@ -232,8 +232,8 @@ defmodule Tablet do
             data: [],
             default_column_width: :minimum,
             formatter: &Tablet.always_default_formatter/2,
-            name: [],
             keys: nil,
+            name: [],
             style: &Tablet.Styles.compact/3,
             total_width: 0,
             wrap_across: 1
