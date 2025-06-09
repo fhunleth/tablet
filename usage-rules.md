@@ -40,21 +40,20 @@ end
 
 - Header formatting: `:__header__` special key in formatter
 - Number formatting: `:erlang.float_to_binary(value, [decimals: 2])`
-- Date formatting: `Calendar.strftime(date, "%Y-%m-%d")`
 - Styled output: `[:green, "text", :default_color]` (use atom versions, not function calls)
 
 ## Text Formatting
 
 - Color: Use `:red`, `:green`, `:yellow`, `:blue`, `:magenta`, `:cyan`, and restore with `:default_color`
 - Style: Use `:italic`, `:underline`, `:blink_slow` and turn off with `:not_italic`, `:no_underline`, `:no_blink`
-- Background: Use `:bg_red`, `:bg_green`, etc., and restore with `:default_background`
+- Background: Use `:red_background`, `:green_background`, etc., and restore with `:default_background`
 
 ## Complete Example
 
 ```elixir
 data = [%{name: "Product X", price: 24.99}, %{name: "Product Y", price: 49.95}]
 
-data |> Tablet.render(
+data |> Tablet.puts(
   title: "Product List",
   style: :unicode_box,
   formatter: fn
@@ -63,5 +62,5 @@ data |> Tablet.render(
     :price, value -> {:ok, [:green, :erlang.float_to_binary(value, [decimals: 2]), :default_color]}
     _, _ -> :default
   end
-) |> IO.ANSI.format() |> IO.puts()
+)
 ```
