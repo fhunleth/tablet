@@ -93,7 +93,18 @@ defmodule Tablet.BoxStyleTest do
     assert output == expected
   end
 
-  test "empty" do
+  test "no rows or columns" do
+    output = Tablet.render([], style: :box) |> ansidata_to_string()
+
+    expected = """
+    ++
+    ++
+    """
+
+    assert output == expected
+  end
+
+  test "no rows" do
     output =
       Tablet.render([], keys: ["key_1"], style: :box)
       |> ansidata_to_string()

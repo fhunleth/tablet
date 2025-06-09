@@ -85,7 +85,13 @@ defmodule Tablet.MarkdownStyleTest do
     assert output == expected
   end
 
-  test "empty" do
+  test "no rows or columns" do
+    output = Tablet.render([], style: :markdown) |> ansidata_to_string()
+
+    assert output == ""
+  end
+
+  test "no rows" do
     output =
       Tablet.render([], keys: ["key_1"], style: :markdown)
       |> ansidata_to_string()

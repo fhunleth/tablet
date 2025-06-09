@@ -49,7 +49,6 @@ defmodule Tablet.Styles do
   defp compact_row([h | t], 0), do: [h, "  " | compact_row(t, 0)]
   defp compact_row([h], _slice), do: [" ", h]
   defp compact_row([h | t], slice), do: [" ", h, " " | compact_row(t, slice)]
-  defp compact_row([], _slice), do: []
 
   defp compact_title(%{name: []} = _table), do: []
 
@@ -96,6 +95,10 @@ defmodule Tablet.Styles do
   defp replace_new_lines([]), do: []
   defp replace_new_lines([h | t]), do: [replace_new_lines(h) | replace_new_lines(t)]
   defp replace_new_lines(value), do: value
+
+  defp markdown_line(table, %{section: :header}, [[]]) do
+    markdown_title(table)
+  end
 
   defp markdown_line(table, %{section: :header}, content) do
     [
@@ -258,6 +261,8 @@ defmodule Tablet.Styles do
        ) + cell_padding * num_keys) + table.wrap_across * (num_keys - 1) * between_cells +
       (table.wrap_across - 1) * between_multi
   end
+
+  defp generic_box_row(_table, [[]], _vertical), do: []
 
   defp generic_box_row(_table, rows, vertical) do
     [vertical, Enum.map(rows, &generic_box_row_set(&1, vertical)), "\n"]
