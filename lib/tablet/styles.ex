@@ -95,6 +95,7 @@ defmodule Tablet.Styles do
   defp replace_new_lines(value) when is_binary(value), do: String.replace(value, "\n", "<br>")
   defp replace_new_lines([]), do: []
   defp replace_new_lines([h | t]), do: [replace_new_lines(h) | replace_new_lines(t)]
+  defp replace_new_lines(value), do: value
 
   defp markdown_line(table, %{section: :header}, content) do
     [

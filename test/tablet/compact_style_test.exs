@@ -161,4 +161,42 @@ defmodule Tablet.CompactStyleTest do
 
     assert output == expected
   end
+
+  test "multi-line cells with ansidata" do
+    data = [
+      %{
+        key1: [:green, "line one\n", "line two\n", :red, "line three", :default_color],
+        key2: ["plain\nmulti\nline\ncell"]
+      }
+    ]
+
+    output = Tablet.render(data, style: :compact) |> Tablet.simplify()
+
+    # Markdown formatting makes this easier due to the `<br>` tags
+    expected = [
+      :underline,
+      ":key1     ",
+      :no_underline,
+      "  ",
+      :underline,
+      ":key2",
+      :no_underline,
+      "\n",
+      :green,
+      "line one",
+      :default_color,
+      "    plain\n ",
+      :green,
+      "line two",
+      :default_color,
+      "    multi\n ",
+      :green,
+      :red,
+      "line three",
+      :default_color,
+      "  line \n             cell \n"
+    ]
+
+    assert output == expected
+  end
 end

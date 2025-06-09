@@ -513,5 +513,106 @@ defmodule TabletTest do
                ["                    "]
              ]
     end
+
+    test "multi-line ansi pause and resume" do
+      text = [
+        [:red, "line1\n"],
+        [:green, "lin", :blue_background, "e2\n"],
+        ["line3", :default_background, "\n"],
+        "line4"
+      ]
+
+      # Important part is that color goes back to the default at the end of each line.
+      # Then in line 3, Tablet doesn't issue :red and :blue_background isn't on line 4.
+      expected =
+        [
+          [:red, "line1", :default_color],
+          [:red, :green, "lin", :blue_background, "e2", :default_color, :default_background],
+          [:blue_background, :green, "line3", :default_background, :default_color],
+          [:green, "line4"]
+        ]
+
+      assert fit(text, {5, 4}, :left) == expected
+    end
+
+    test "multi-line ansi pause and resume with default" do
+      text = [
+        :red,
+        "line1\n",
+        :default_color,
+        "line2\n",
+        "line3\n",
+        "line4"
+      ]
+
+      # Important part is that after :red is cleared, no ANSI directives need
+      # to start the following lines.
+      expected = [
+        [:red, "line1", :default_color],
+        [:red, :default_color, "line2"],
+        ["line3"],
+        ["line4"]
+      ]
+
+      assert fit(text, {5, 4}, :left) == expected
+    end
+
+    test "multi-line ansi pause and resume with underline and italic" do
+      text = [
+        [:underline, "line1\n"],
+        [:italic, "line2\n"],
+        [:no_underline, "line3", :not_italic, "\n"],
+        "line4"
+      ]
+
+      expected = [
+        [:underline, "line1", :no_underline],
+        [:underline, :italic, "line2", :not_italic, :no_underline],
+        [:underline, :italic, :no_underline, "line3", :not_italic],
+        ["line4"]
+      ]
+
+      assert fit(text, {5, 4}, :left) == expected
+    end
+
+    test "multi-line ansi pause and resume with other attributes" do
+      text = [
+        [:blink_slow, "line1\n"],
+        [:blink_fast, "line2\n"],
+        "line3\n",
+        ["line4", :blink_off]
+      ]
+
+      # Important part is that both :blink_slow and :blink_fast are issued on line3 since
+      # Tablet doesn't know how to summarize them.
+      expected = [
+        [:blink_slow, "line1", :reset],
+        [:blink_slow, :blink_fast, "line2", :reset],
+        [:blink_slow, :blink_fast, "line3", :reset],
+        [:blink_slow, :blink_fast, "line4", :blink_off]
+      ]
+
+      assert fit(text, {5, 4}, :left) == expected
+    end
+
+    test "multi-line ansi pause and resume with reset" do
+      text = [
+        [:blue, :yellow_background, :italic, :blink_slow, "line1", :reset, "\n"],
+        "line2\n",
+        "line3\n",
+        "line4"
+      ]
+
+      # Important part is that both :blink_slow and :blink_fast are issued on line3 since
+      # Tablet doesn't know how to summarize them.
+      expected = [
+        [:blue, :yellow_background, :italic, :blink_slow, "line1", :reset],
+        ["line2"],
+        ["line3"],
+        ["line4"]
+      ]
+
+      assert fit(text, {5, 4}, :left) == expected
+    end
   end
 end

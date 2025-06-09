@@ -204,4 +204,64 @@ defmodule Tablet.LedgerStyleTest do
 
     assert output == expected
   end
+
+  test "multi-line cells with ansidata" do
+    data = [
+      %{
+        key1: [:green, "line one\n", "line two\n", :red, "line three", :default_color],
+        key2: ["plain\nmulti\nline\ncell"]
+      }
+    ]
+
+    output = Tablet.render(data, style: :ledger) |> Tablet.simplify()
+
+    # Markdown formatting makes this easier due to the `<br>` tags
+    expected = [
+      :light_blue_background,
+      :black,
+      " :key1       :key2 ",
+      :default_background,
+      :default_color,
+      "\n",
+      :light_black_background,
+      :white,
+      " ",
+      :green,
+      "line one",
+      :default_color,
+      "    plain ",
+      :default_background,
+      :default_color,
+      "\n",
+      :light_black_background,
+      :white,
+      " ",
+      :green,
+      "line two",
+      :default_color,
+      "    multi ",
+      :default_background,
+      :default_color,
+      "\n",
+      :light_black_background,
+      :white,
+      " ",
+      :green,
+      :red,
+      "line three",
+      :default_color,
+      "  line  ",
+      :default_background,
+      :default_color,
+      "\n",
+      :light_black_background,
+      :white,
+      "             cell  ",
+      :default_background,
+      :default_color,
+      "\n"
+    ]
+
+    assert output == expected
+  end
 end

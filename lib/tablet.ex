@@ -494,9 +494,7 @@ defmodule Tablet do
     table.data
     |> Enum.map(fn row -> for c <- table.keys, do: {c, format(table, c, row[c])} end)
     |> group_multi_column(table.keys, table.wrap_across)
-    |> Enum.with_index(fn rows, i ->
-      render_line(table, %{context | row: i}, rows)
-    end)
+    |> Enum.with_index(fn rows, i -> render_line(table, %{context | row: i}, rows) end)
   end
 
   defp render_line(table, context, rows) do
@@ -537,7 +535,7 @@ defmodule Tablet do
 
     data
     |> Enum.chunk_every(count, count, Stream.cycle([empty_row]))
-    |> Enum.zip_with(&Function.identity/1)
+    |> zip_lists()
   end
 
   defp group_multi_column(data, _data_length, _wrap_across), do: Enum.map(data, &[&1])
@@ -607,7 +605,7 @@ defmodule Tablet do
 
   # Input: ansidata, output: list of ansidata split into lines
   # ANSI codes are re-issued on each line to preserve ANSI state when interleaved with other cells
-  defp break_into_lines(ansidata), do: break_into_lines(ansidata, [], [], [])
+  defp break_into_lines(ansidata), do: break_into_lines(ansidata, [], [], %{})
 
   defp break_into_lines([], current, lines, _ansi),
     do: Enum.reverse([Enum.reverse(current) | lines])
@@ -621,12 +619,76 @@ defmodule Tablet do
         break_into_lines(t, [line | current], lines, ansi)
 
       [line, rest] ->
-        break_into_lines([rest | t], ansi, [Enum.reverse([line | current]) | lines], ansi)
+        break_into_lines(
+          [rest | t],
+          resume_ansi_r(ansi),
+          [Enum.reverse([pause_ansi(ansi), line | current]) | lines],
+          ansi
+        )
     end
   end
 
   defp break_into_lines([h | t], current, lines, ansi),
-    do: break_into_lines(t, [h | current], lines, [h | ansi])
+    do: break_into_lines(t, [h | current], lines, merge_ansi(ansi, h))
+
+  @ansi_colors [
+    :black,
+    :red,
+    :green,
+    :yellow,
+    :blue,
+    :magenta,
+    :cyan,
+    :white,
+    :light_black,
+    :light_red,
+    :light_green,
+    :light_yellow,
+    :light_blue,
+    :light_magenta,
+    :light_cyan,
+    :light_white
+  ]
+  @ansi_backgrounds [
+    :black_background,
+    :red_background,
+    :green_background,
+    :yellow_background,
+    :blue_background,
+    :magenta_background,
+    :cyan_background,
+    :white_background,
+    :light_black_background,
+    :light_red_background,
+    :light_green_background,
+    :light_yellow_background,
+    :light_blue_background,
+    :light_magenta_background,
+    :light_cyan_background,
+    :light_white_background
+  ]
+
+  defp merge_ansi(state, :default_color), do: Map.delete(state, :color)
+  defp merge_ansi(state, :default_background), do: Map.delete(state, :background)
+  defp merge_ansi(state, :not_italic), do: Map.delete(state, :italic)
+  defp merge_ansi(state, :no_underline), do: Map.delete(state, :underline)
+  defp merge_ansi(state, :underline), do: Map.put(state, :underline, [:underline])
+  defp merge_ansi(state, :italic), do: Map.put(state, :italic, [:italic])
+  defp merge_ansi(_state, :reset), do: %{}
+  defp merge_ansi(state, c) when c in @ansi_colors, do: Map.put(state, :color, [c])
+  defp merge_ansi(state, c) when c in @ansi_backgrounds, do: Map.put(state, :background, [c])
+  defp merge_ansi(state, other), do: Map.update(state, :other, [other], &[other | &1])
+
+  # Returns reverse order to apply for supporting "other" codes. Also see caller.
+  defp resume_ansi_r(state), do: state |> Map.values() |> Enum.concat()
+
+  defp pause_ansi(state), do: state |> Map.keys() |> Enum.map(&pause_atom/1)
+
+  defp pause_atom(:color), do: :default_color
+  defp pause_atom(:background), do: :default_background
+  defp pause_atom(:italic), do: :not_italic
+  defp pause_atom(:underline), do: :no_underline
+  defp pause_atom(_other), do: :reset
 
   # Truncate flattened ansidata and add ellipsis if needed
   defp truncate([], len, acc), do: {Enum.reverse(acc), len}
@@ -692,20 +754,20 @@ defmodule Tablet do
   """
   @spec simplify(IO.ANSI.ansidata()) :: IO.ANSI.ansidata()
   def simplify(ansidata) do
-    ansidata |> flatten() |> merge_ansi(:reset) |> merge_text("")
+    ansidata |> flatten() |> simplify_ansi(:reset) |> simplify_text("")
   end
 
-  defp merge_ansi([last_ansi | t], last_ansi), do: merge_ansi(t, last_ansi)
-  defp merge_ansi([h | t], _last_ansi) when is_atom(h), do: [h | merge_ansi(t, h)]
-  defp merge_ansi([h | t], last_ansi), do: [h | merge_ansi(t, last_ansi)]
-  defp merge_ansi([], _last_ansi), do: []
+  defp simplify_ansi([last_ansi | t], last_ansi), do: simplify_ansi(t, last_ansi)
+  defp simplify_ansi([h | t], _last_ansi) when is_atom(h), do: [h | simplify_ansi(t, h)]
+  defp simplify_ansi([h | t], last_ansi), do: [h | simplify_ansi(t, last_ansi)]
+  defp simplify_ansi([], _last_ansi), do: []
 
-  defp merge_text([h | t], last) when is_binary(h), do: merge_text(t, last <> h)
-  defp merge_text([h | t], "") when is_atom(h), do: [h | merge_text(t, "")]
-  defp merge_text([h | t], last) when is_atom(h), do: [last, h | merge_text(t, "")]
-  defp merge_text([h | t], last) when is_integer(h), do: merge_text(t, <<last::binary, h::utf8>>)
-  defp merge_text([], ""), do: []
-  defp merge_text([], last), do: [last]
+  defp simplify_text([h | t], acc) when is_binary(h), do: simplify_text(t, acc <> h)
+  defp simplify_text([h | t], "") when is_atom(h), do: [h | simplify_text(t, "")]
+  defp simplify_text([h | t], acc) when is_atom(h), do: [acc, h | simplify_text(t, "")]
+  defp simplify_text([h | t], acc), do: simplify_text(t, <<acc::binary, h::utf8>>)
+  defp simplify_text([], ""), do: []
+  defp simplify_text([], acc), do: [acc]
 
   @doc """
   Calculate the size of ansidata when rendered

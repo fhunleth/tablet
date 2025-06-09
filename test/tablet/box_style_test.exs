@@ -210,4 +210,35 @@ defmodule Tablet.BoxStyleTest do
 
     assert output == expected
   end
+
+  test "multi-line cells with ansidata" do
+    data = [
+      %{
+        key1: [:green, "line one\n", "line two\n", :red, "line three", :default_color],
+        key2: ["plain\nmulti\nline\ncell"]
+      }
+    ]
+
+    output = Tablet.render(data, style: :box) |> Tablet.simplify()
+
+    # Markdown formatting makes this easier due to the `<br>` tags
+    expected = [
+      "+────────────+───────+\n| :key1      | :key2 |\n+────────────+───────+\n| ",
+      :green,
+      "line one",
+      :default_color,
+      "   | plain |\n| ",
+      :green,
+      "line two",
+      :default_color,
+      "   | multi |\n| ",
+      :green,
+      :red,
+      "line three",
+      :default_color,
+      " | line  |\n|            | cell  |\n+────────────+───────+\n"
+    ]
+
+    assert output == expected
+  end
 end
