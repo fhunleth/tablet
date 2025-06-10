@@ -52,7 +52,8 @@ If you're comparing tabular data rendering libraries, Tablet sacrifices
 flexibility in how individual cells can be rendered for small size. Color
 selection, text alignment, border characters, etc. are all grouped into the
 style. If you're happy with the built-in styles, rendering may be a one-liner.
-See [`table_rex`](https://hex.pm/packages/table_rex) for another option.
+See [`table_rex`](https://hex.pm/packages/table_rex) for another option that has
+more flexibility in cell layout.
 
 ## Example
 
@@ -121,7 +122,15 @@ does all of the work. If fact, if you find `IO.ANSI` too limited, then you
 could use an alternative like [bunt](https://hex.pm/packages/bunt) and
 include atoms like `:chartreuse` which its formatter will understand.
 
-## Acknowledgements
+## Notes and acknowledgments
 
-Thanks to the Rust [tabled](https://github.com/zhiburt/tabled/tree/master/tabled)
-project for showing what's possible.
+1. The implementation is no longer simple. Multi-line cell support really put
+   it over the edge, but I still hope to figure out how to simplify it again.
+
+2. Thanks to Claude 3.7 for creating tons of example uses of Tablet so I could
+   see how it looked. It drove me to `usage-rules.md` due to its epic butchering
+   of ansidata.
+
+3. Thanks to the Rust
+   [tabled](https://github.com/zhiburt/tabled/tree/master/tabled) project for
+   showing what's possible.
