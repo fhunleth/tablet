@@ -185,10 +185,7 @@ defmodule Tablet do
 
   Tablet makes calls to the styling function for each line in the table
   starting with the header, then the rows (0 to N-1), and finally the footer.
-  The second parameter is the `t:styling_context/0`. Users can supply
-  additional context via the `:context` option when rendering the tables. This
-  is the means by which users can inform the styling function of potentially
-  important things like locale.
+  The second parameter is the `t:line_context/0` with position details.
 
   The third parameter is a list of `t:IO.ANSI.ansidata/0` values. When
   rendering multi-column tables (`:wrap_across` set to greater than 1), each
@@ -302,7 +299,6 @@ defmodule Tablet do
   Options:
 
   * `:column_widths` - a map of keys to their desired column widths. See `t:column_width/0`.
-  * `:context` - optional context to be passed tyo the styling function
   * `:data` - tabular data
   * `:default_column_width` - default column width in characters
   * `:formatter` - if passing non-ansidata, supply a function to apply custom formatting
@@ -343,7 +339,6 @@ defmodule Tablet do
       options
       |> Keyword.take([
         :column_widths,
-        :context,
         :default_column_width,
         :formatter,
         :keys,
@@ -360,7 +355,6 @@ defmodule Tablet do
   end
 
   defp normalize({:column_widths, v} = opt) when is_map(v), do: opt
-  defp normalize({:context, v} = opt) when is_map(v), do: opt
 
   defp normalize({:default_column_width, v} = opt)
        when (is_integer(v) and v >= 0) or v in [:expand, :minimum],
