@@ -32,7 +32,8 @@ To use, pass `style: :ledger` to `Tablet.puts/2` or `Tablet.render/2`.
 
 ## Markdown
 
-Render tabular data as a GitHub-flavored markdown table.
+Render tabular data as a GitHub-flavored markdown table. Multi-line cells
+have their newlines replaced with `<br>` tags.
 
 Pass `style: :markdown` to `Tablet.puts/2` or `Tablet.render/2` to use.
 
