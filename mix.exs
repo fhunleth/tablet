@@ -76,6 +76,11 @@ defmodule Tablet.MixProject do
     [
       assets: %{"assets" => "assets"},
       extras: ["README.md", "gallery.md", "CHANGELOG.md"],
+      default_group_for_doc: fn metadata ->
+        if group = metadata[:group] do
+          "Functions: #{group}"
+        end
+      end,
       main: "readme",
       source_ref: "v#{@version}",
       source_url: @source_url,

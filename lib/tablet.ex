@@ -278,6 +278,7 @@ defmodule Tablet do
             total_width: 0,
             wrap_across: 1
 
+  @doc group: "Core"
   @doc """
   Print a table to the console
 
@@ -296,6 +297,7 @@ defmodule Tablet do
     |> IO.write()
   end
 
+  @doc group: "Core"
   @doc """
   Render a table as `t:IO.ANSI.ansidata/0`
 
@@ -321,6 +323,7 @@ defmodule Tablet do
     |> to_ansidata()
   end
 
+  @doc group: "Utilities"
   @doc """
   Compute column widths
 
@@ -573,6 +576,7 @@ defmodule Tablet do
     end
   end
 
+  @doc group: "Utilities"
   @doc """
   Fit ansidata into the specified number of characters
 
@@ -746,6 +750,7 @@ defmodule Tablet do
 
   defp padding(len), do: :binary.copy(" ", len)
 
+  @doc group: "Utilities"
   @doc """
   Convenience function for simplifying ansidata
 
@@ -769,6 +774,7 @@ defmodule Tablet do
   defp simplify_text([], ""), do: []
   defp simplify_text([], acc), do: [acc]
 
+  @doc group: "Utilities"
   @doc """
   Calculate the size of ansidata when rendered
 
