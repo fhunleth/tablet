@@ -125,6 +125,14 @@ defmodule TabletTest do
     assert_raise ArgumentError, fn -> Tablet.render(data, wrap_across: 0) end
   end
 
+  test "formatter that returns the wrong type" do
+    data = [%{id: 1, name: "Puck"}]
+
+    assert_raise ArgumentError, fn ->
+      Tablet.render(data, formatter: fn _, _ -> "forgot the ok" end)
+    end
+  end
+
   test "compact style can be specified" do
     data = [%{id: 1, name: "Puck"}, %{id: 2, name: "Nick Bottom"}]
 
