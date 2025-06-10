@@ -43,7 +43,8 @@ Here are some of Tablet's features:
 * Emoji and CJK character width calculations w/o external dependencies
 * Multi-column wrapping for tables with many rows and few columns
 * Built-in [styles](gallery.md) and optional callback interface for customization
-* Embraces [`IO.ANSI.ansidata`](https://hexdocs.pm/elixir/IO.ANSI.html#format/1). Allows decision for ANSI code insertion to be deferred or extended.
+* Supports [`IO.ANSI.ansidata`](https://hexdocs.pm/elixir/IO.ANSI.html#format/1) throughout for color, italics, and more in cells and styling
+* Supports [`usage_rules`](https://hex.pm/packages/usage_rules) for helping LLMs make beautiful tables
 
 [![Run in Livebook](https://livebook.dev/badge/v1/pink.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Ffhunleth%2Ftablet%2Fblob%2Fmain%2Fnotebooks%2Ftablet.livemd)
 
