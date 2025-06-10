@@ -783,7 +783,7 @@ defmodule Tablet do
   ## Examples
 
   ```
-  iex> ansidata = ["Hello, ", :red, "world", :reset, "!"]
+  iex> ansidata = ["Hello, ", :red, "world", :default_color, "!"]
   iex> Tablet.visual_size(ansidata)
   {13, 1}
   ```
