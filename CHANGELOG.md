@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.1
+
+* Changes
+  * Fix padding of Erlang strings
+
 ## v0.3.0
 
 * Backwards incompatible changes
