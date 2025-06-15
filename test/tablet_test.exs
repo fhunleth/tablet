@@ -429,6 +429,13 @@ defmodule TabletTest do
       assert Tablet.visual_size([:red, "José", :reset]) == {4, 1}
     end
 
+    test "Erlang strings" do
+      assert Tablet.visual_size(~c"en0") == {3, 1}
+      assert Tablet.visual_size(~c"こんにちは") == {10, 1}
+      assert Tablet.visual_size(~c"🇫🇷") == {2, 1}
+      assert Tablet.visual_size([:red, ~c"Hello", :reset]) == {5, 1}
+    end
+
     test "multi-line" do
       assert Tablet.visual_size("Hello\nWorld") == {5, 2}
       assert Tablet.visual_size("Hello\nJosé") == {5, 2}
@@ -499,6 +506,12 @@ defmodule TabletTest do
       assert fit("Exact\n", {5, 1}, :left) == [["Exact"]]
     end
 
+    test "one-line left justified Erlang strings" do
+      assert fit(~c"Hello", {10, 1}, :left) == [["Hello     "]]
+      assert fit(~c"José", {10, 1}, :left) == [["José      "]]
+      assert fit(~c"😀 👻 🐭", {10, 1}, :left) == [["😀 👻 🐭  "]]
+    end
+
     test "multi-line string trims" do
       text = "1. First thing\n2. Second thing\n3. Third thing"
       assert fit(text, {5, 2}, :left) == [["1. F…"], ["2. S…"]]
@@ -514,6 +527,18 @@ defmodule TabletTest do
                ["Hello               "],
                ["                    "],
                ["                    "]
+             ]
+    end
+
+    test "multi-line Erlang string trims" do
+      text = ~c"1. First thing\n2. Second thing\n3. Third thing"
+      assert fit(text, {5, 2}, :left) == [["1. F…"], ["2. S…"]]
+      assert fit(text, {20, 2}, :left) == [["1. First thing      "], ["2. Second thing     "]]
+
+      assert fit(text, {20, 3}, :left) == [
+               ["1. First thing      "],
+               ["2. Second thing     "],
+               ["3. Third thing      "]
              ]
     end
 

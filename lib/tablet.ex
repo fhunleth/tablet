@@ -586,8 +586,11 @@ defmodule Tablet do
           IO.ANSI.ansidata()
   def fit(ansidata, {w, h}, justification)
       when is_integer(w) and w >= 0 and is_integer(h) and h > 0 do
+    # simplify/1 is called here to both flatten the ansidata and to turn all
+    # Erlang strings into binaries. Subsequent functions assume flat lists and
+    # `truncate/3` doesn't handle Erlang strings.
     ansidata
-    |> flatten()
+    |> simplify()
     |> break_into_lines()
     |> pad_lines(h)
     |> Enum.map(fn line ->
