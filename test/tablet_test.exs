@@ -474,19 +474,19 @@ defmodule TabletTest do
       end
     end
 
-    test "one-line left justifies" do
+    test "one-line left justified" do
       assert fit("Hello", {10, 1}, :left) == [["Hello     "]]
       assert fit("José", {10, 1}, :left) == [["José      "]]
       assert fit("😀 👻 🐭", {10, 1}, :left) == [["😀 👻 🐭  "]]
     end
 
-    test "one-line right justifies" do
+    test "one-line right justified" do
       assert fit("Hello", {10, 1}, :right) == [["     Hello"]]
       assert fit("José", {10, 1}, :right) == [["      José"]]
       assert fit("😀 👻 🐭", {10, 1}, :right) == [["  😀 👻 🐭"]]
     end
 
-    test "one-line center justifies" do
+    test "one-line center justified" do
       assert fit("Hello", {10, 1}, :center) == [["  Hello   "]]
       assert fit("José", {10, 1}, :center) == [["   José   "]]
       assert fit("😀 👻 🐭", {10, 1}, :center) == [[" 😀 👻 🐭 "]]
