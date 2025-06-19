@@ -118,7 +118,7 @@ In a nutshell, `t:IO.ANSI.ansidata/0` lets you create lists of strings to
 print and intermix atoms like `:red` or `:blue` to indicate where ANSI escape
 sequences should be inserted if supported. Tablet actually doesn't know what
 any of the atoms means and passes them through. Elixir's `IO.ANSI` module
-does all of the work. If fact, if you find `IO.ANSI` too limited, then you
+does all of the work. In fact, if you find `IO.ANSI` too limited, then you
 could use an alternative like [bunt](https://hex.pm/packages/bunt) and
 include atoms like `:chartreuse` which its formatter will understand.
 
