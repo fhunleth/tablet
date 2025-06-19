@@ -199,7 +199,7 @@ defmodule Tablet.Styles do
     * `:ul` and `:ur` - upper left and upper right corners
     * `:uc` - intersection of the horizontal top border with a vertical (looks like a T)
     * `:ll` and `:lr` - lower left and lower right corners
-    * `:lc` - analogous to `:uc` except on the Nick Bottom border
+    * `:lc` - analogous to `:uc` except on the bottom border
     * `:l` and `:r` - left and right side characters with horizontal lines towards the interior
     * `:c` - interior horizontal and vertical intersection
   """
