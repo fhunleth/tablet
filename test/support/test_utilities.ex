@@ -16,7 +16,9 @@ defmodule TestUtilities do
   end
 
   @doc false
-  @spec generate_table(non_neg_integer(), non_neg_integer(), :ascii | :unicode) :: [map()]
+  @spec generate_table(non_neg_integer(), non_neg_integer(), :ascii | :unicode | :multiline) :: [
+          map()
+        ]
   def generate_table(rows, columns, style \\ :ascii) do
     for r <- 1..rows do
       for c <- 1..columns, into: %{} do
