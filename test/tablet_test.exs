@@ -23,6 +23,23 @@ defmodule TabletTest do
     assert removes_trailing_spaces(output) == expected
   end
 
+  test "puts/2 with ANSI" do
+    data = [%{id: 1, name: "Puck"}, %{id: 2, name: "Nick Bottom"}]
+
+    output =
+      capture_io(fn ->
+        Tablet.puts(data, ansi_enabled?: true)
+      end)
+
+    expected =
+      data
+      |> Tablet.render()
+      |> IO.ANSI.format(true)
+      |> IO.chardata_to_string()
+
+    assert output == expected
+  end
+
   test "table with emojis" do
     header = %{country: "COUNTRY", capital: "CAPITAL", flag: "FLAG", mcd: "McDONALD'S LOCATIONS"}
 
