@@ -248,7 +248,7 @@ defmodule TabletTest do
     assert output == expected
   end
 
-  test "multi-column" do
+  test "multi-column vertical" do
     data = generate_table(28, 2)
 
     output =
@@ -267,6 +267,30 @@ defmodule TabletTest do
     Echo     Alpha     Echo     Alpha     Echo     Alpha
     Alpha    Bravo     Alpha    Bravo
     Bravo    Charlie   Bravo    Charlie
+    """
+
+    assert output == expected
+  end
+
+  test "multi-column horizontal" do
+    data = generate_table(28, 2)
+
+    output =
+      Tablet.render(data, wrap_across: 3, wrap_direction: :horizontal)
+      |> ansidata_to_string()
+
+    expected = """
+    key_1    key_2     key_1    key_2     key_1    key_2
+    Charlie  Delta     Delta    Echo      Echo     Alpha
+    Alpha    Bravo     Bravo    Charlie   Charlie  Delta
+    Delta    Echo      Echo     Alpha     Alpha    Bravo
+    Bravo    Charlie   Charlie  Delta     Delta    Echo
+    Echo     Alpha     Alpha    Bravo     Bravo    Charlie
+    Charlie  Delta     Delta    Echo      Echo     Alpha
+    Alpha    Bravo     Bravo    Charlie   Charlie  Delta
+    Delta    Echo      Echo     Alpha     Alpha    Bravo
+    Bravo    Charlie   Charlie  Delta     Delta    Echo
+    Echo     Alpha
     """
 
     assert output == expected

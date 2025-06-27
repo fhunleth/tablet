@@ -244,6 +244,7 @@ defmodule Tablet do
     * `:multi_column` - number of characters added between multi-column border cells
   * `:total_width` - the width of the console for use when expanding columns. The default is 0 to autodetect.
   * `:wrap_across` - the number of columns to wrap across in multi-column mode. The default is 1.
+  * `:wrap_direction` - the direction rows are ordered in multi-column mode. The default is `:vertical`
   """
   @type t :: %__MODULE__{
           column_widths: %{key() => column_width()},
@@ -262,7 +263,8 @@ defmodule Tablet do
             multi_column: non_neg_integer()
           },
           total_width: non_neg_integer(),
-          wrap_across: pos_integer()
+          wrap_across: pos_integer(),
+          wrap_direction: :vertical | :horizontal
         }
   defstruct column_widths: %{},
             data: [],
@@ -276,7 +278,8 @@ defmodule Tablet do
             style_options: [],
             style_padding: %{edge: 1, cell: 2, multi_column: 2},
             total_width: 0,
-            wrap_across: 1
+            wrap_across: 1,
+            wrap_direction: :vertical
 
   @doc group: "Core"
   @doc """
@@ -316,6 +319,7 @@ defmodule Tablet do
   * `:style` - see `t:style/0` for details on styling tables
   * `:total_width` - the total width of the table if any of the `:column_widths` is `:expand`. Defaults to the console width if needed.
   * `:wrap_across` - the number of columns to wrap across in multi-column mode
+  * `:wrap_direction` - the direction rows are ordered in multi-column mode. The default is `:vertical`
   """
   @spec render(data(), keyword()) :: IO.ANSI.ansidata()
   def render(data, options \\ []) do
@@ -357,7 +361,8 @@ defmodule Tablet do
         :style,
         :style_options,
         :total_width,
-        :wrap_across
+        :wrap_across,
+        :wrap_direction
       ])
       |> Enum.map(&normalize/1)
 
@@ -383,6 +388,7 @@ defmodule Tablet do
   defp normalize({:style_options, v} = opt) when is_list(v), do: opt
   defp normalize({:total_width, v} = opt) when is_integer(v) and v >= 0, do: opt
   defp normalize({:wrap_across, v} = opt) when is_integer(v) and v >= 1, do: opt
+  defp normalize({:wrap_direction, v} = opt) when v in [:vertical, :horizontal], do: opt
 
   defp normalize({key, value}) do
     raise ArgumentError, "Unexpected value passed to #{inspect(key)}: #{inspect(value)}"
@@ -496,7 +502,7 @@ defmodule Tablet do
     # 3. Style the groups
     table.data
     |> Enum.map(fn row -> for c <- table.keys, do: {c, format(table, c, row[c])} end)
-    |> group_multi_column(table.keys, table.wrap_across)
+    |> group_multi_column(table)
     |> Enum.with_index(fn rows, i -> render_line(table, %{context | row: i}, rows) end)
   end
 
@@ -531,17 +537,24 @@ defmodule Tablet do
     end)
   end
 
-  defp group_multi_column(data, keys, wrap_across)
-       when data != [] and wrap_across > 1 do
-    count = ceil(length(data) / wrap_across)
-    empty_row = for c <- keys, do: {c, []}
+  defp group_multi_column([], _table), do: []
+  defp group_multi_column(data, %{wrap_across: 1} = _table), do: Enum.map(data, &[&1])
+
+  defp group_multi_column(data, %{wrap_direction: :horizontal} = table) do
+    empty_row = for c <- table.keys, do: {c, []}
+
+    data
+    |> Enum.chunk_every(table.wrap_across, table.wrap_across, Stream.cycle([empty_row]))
+  end
+
+  defp group_multi_column(data, table) do
+    count = ceil(length(data) / table.wrap_across)
+    empty_row = for c <- table.keys, do: {c, []}
 
     data
     |> Enum.chunk_every(count, count, Stream.cycle([empty_row]))
     |> zip_lists()
   end
-
-  defp group_multi_column(data, _data_length, _wrap_across), do: Enum.map(data, &[&1])
 
   @doc false
   @spec always_default_formatter(key(), any()) :: :default
