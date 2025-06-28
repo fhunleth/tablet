@@ -22,7 +22,7 @@ defmodule TestUtilities do
   def generate_table(rows, columns, style \\ :ascii) do
     for r <- 1..rows do
       for c <- 1..columns, into: %{} do
-        {key(c, style), value(r, c, style)}
+        {key(c, style), value((r - 1) * columns + c - 1, style)}
       end
     end
   end
@@ -31,14 +31,16 @@ defmodule TestUtilities do
   defp key(c, :unicode), do: "キー_#{c}"
   defp key(c, :multiline), do: key(c, :ascii)
 
-  @ascii_words {"Alpha", "Bravo", "Charlie", "Delta", "Echo"}
+  @ascii_words {"Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India",
+                "Juliet", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo",
+                "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu"}
   @unicode_words {"りんご 🍎", "Plátano 🍌", "체리 🍒", "枣子 🌴", "Sureau 🍇"}
   @multiline_words {"Single line", "Two\nline", "A\nthree\nline value", "Fruit emojis\n🍎🍌🍒🌴🍇",
                     "こんにちは\nHello"}
 
-  defp value(r, c, :ascii), do: tuple_index(@ascii_words, r + c)
-  defp value(r, c, :unicode), do: tuple_index(@unicode_words, r + c)
-  defp value(r, c, :multiline), do: tuple_index(@multiline_words, r + c)
+  defp value(i, :ascii), do: tuple_index(@ascii_words, i)
+  defp value(i, :unicode), do: tuple_index(@unicode_words, i)
+  defp value(i, :multiline), do: tuple_index(@multiline_words, i)
 
   defp tuple_index(tuple, index), do: elem(tuple, rem(index, tuple_size(tuple)))
 

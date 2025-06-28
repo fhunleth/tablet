@@ -256,17 +256,17 @@ defmodule TabletTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1    key_2     key_1    key_2     key_1    key_2
-    Charlie  Delta     Charlie  Delta     Charlie  Delta
-    Delta    Echo      Delta    Echo      Delta    Echo
-    Echo     Alpha     Echo     Alpha     Echo     Alpha
-    Alpha    Bravo     Alpha    Bravo     Alpha    Bravo
-    Bravo    Charlie   Bravo    Charlie   Bravo    Charlie
-    Charlie  Delta     Charlie  Delta     Charlie  Delta
-    Delta    Echo      Delta    Echo      Delta    Echo
-    Echo     Alpha     Echo     Alpha     Echo     Alpha
-    Alpha    Bravo     Alpha    Bravo
-    Bravo    Charlie   Bravo    Charlie
+    key_1    key_2      key_1    key_2      key_1    key_2
+    Alpha    Bravo      Uniform  Victor     Oscar    Papa
+    Charlie  Delta      Whiskey  X-ray      Quebec   Romeo
+    Echo     Foxtrot    Yankee   Zulu       Sierra   Tango
+    Golf     Hotel      Alpha    Bravo      Uniform  Victor
+    India    Juliet     Charlie  Delta      Whiskey  X-ray
+    Kilo     Lima       Echo     Foxtrot    Yankee   Zulu
+    Mike     November   Golf     Hotel      Alpha    Bravo
+    Oscar    Papa       India    Juliet     Charlie  Delta
+    Quebec   Romeo      Kilo     Lima
+    Sierra   Tango      Mike     November
     """
 
     assert output == expected
@@ -280,17 +280,17 @@ defmodule TabletTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1    key_2     key_1    key_2     key_1    key_2
-    Charlie  Delta     Delta    Echo      Echo     Alpha
-    Alpha    Bravo     Bravo    Charlie   Charlie  Delta
-    Delta    Echo      Echo     Alpha     Alpha    Bravo
-    Bravo    Charlie   Charlie  Delta     Delta    Echo
-    Echo     Alpha     Alpha    Bravo     Bravo    Charlie
-    Charlie  Delta     Delta    Echo      Echo     Alpha
-    Alpha    Bravo     Bravo    Charlie   Charlie  Delta
-    Delta    Echo      Echo     Alpha     Alpha    Bravo
-    Bravo    Charlie   Charlie  Delta     Delta    Echo
-    Echo     Alpha
+    key_1    key_2      key_1    key_2      key_1    key_2
+    Alpha    Bravo      Charlie  Delta      Echo     Foxtrot
+    Golf     Hotel      India    Juliet     Kilo     Lima
+    Mike     November   Oscar    Papa       Quebec   Romeo
+    Sierra   Tango      Uniform  Victor     Whiskey  X-ray
+    Yankee   Zulu       Alpha    Bravo      Charlie  Delta
+    Echo     Foxtrot    Golf     Hotel      India    Juliet
+    Kilo     Lima       Mike     November   Oscar    Papa
+    Quebec   Romeo      Sierra   Tango      Uniform  Victor
+    Whiskey  X-ray      Yankee   Zulu       Alpha    Bravo
+    Charlie  Delta
     """
 
     assert output == expected
@@ -307,10 +307,10 @@ defmodule TabletTest do
 
     expected = """
     キー_1     キー_2      キー_3                     キー_4
-    체리 🍒    枣子 🌴     Sureau 🍇                  りんご 🍎
-    枣子 🌴    Sureau 🍇   りんご 🍎                  Plátano 🍌
-    Sureau 🍇  りんご 🍎   Plátano 🍌                 체리 🍒
     りんご 🍎  Plátano 🍌  체리 🍒                    枣子 🌴
+    Sureau 🍇  りんご 🍎   Plátano 🍌                 체리 🍒
+    枣子 🌴    Sureau 🍇   りんご 🍎                  Plátano 🍌
+    체리 🍒    枣子 🌴     Sureau 🍇                  りんご 🍎
     """
 
     assert output == expected
@@ -324,12 +324,12 @@ defmodule TabletTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1    key_2  key_3  key_4    key_5
-    Charlie  Delta  Echo   Alpha    Bravo
+    key_1    key_2  key_3    key_4     key_5
+    Alpha    Bravo  Charlie  Delta     Echo
 
-    Delta    Echo   Alpha  Bravo    Charlie
+    Foxtrot  Golf   Hotel    India     Juliet
 
-    Echo     Alpha  Bravo  Charlie  Delta
+    Kilo     Lima   Mike     November  Oscar
 
     """
 

@@ -21,7 +21,7 @@ defmodule Tablet.CompactStyleTest do
     expected = [
       "        Title        \n",
       :underline,
-      "key_1  ",
+      "key_1",
       :no_underline,
       "  ",
       :underline,
@@ -29,9 +29,9 @@ defmodule Tablet.CompactStyleTest do
       :no_underline,
       "  ",
       :underline,
-      "key_3",
+      "key_3  ",
       :no_underline,
-      "\n" <> "Charlie  Delta  Echo \n" <> "Delta    Echo   Alpha\n"
+      "\nAlpha  Bravo  Charlie\nDelta  Echo   Foxtrot\n"
     ]
 
     assert output == expected
@@ -45,8 +45,8 @@ defmodule Tablet.CompactStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1    key_2  key_3
-    Charlie  Delta  Echo
+    key_1  key_2  key_3
+    Alpha  Bravo  Charlie
     """
 
     assert output == expected
@@ -61,9 +61,9 @@ defmodule Tablet.CompactStyleTest do
 
     expected = """
     key_1
+    Alpha
+    Bravo
     Charlie
-    Delta
-    Echo
     """
 
     assert output == expected
@@ -95,10 +95,10 @@ defmodule Tablet.CompactStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    key_1    key_2    key_3     key_1    key_2    key_3
-    Charlie  Delta    Echo      Alpha    Bravo    Charlie
-    Delta    Echo     Alpha     Bravo    Charlie  Delta
-    Echo     Alpha    Bravo
+    key_1   key_2     key_3     key_1   key_2     key_3
+    Alpha   Bravo     Charlie   Juliet  Kilo      Lima
+    Delta   Echo      Foxtrot   Mike    November  Oscar
+    Golf    Hotel     India
     """
 
     assert output == expected
@@ -113,10 +113,10 @@ defmodule Tablet.CompactStyleTest do
 
     expected = """
                      Multi-column Title
-    key_1    key_2    key_3     key_1    key_2    key_3
-    Charlie  Delta    Echo      Alpha    Bravo    Charlie
-    Delta    Echo     Alpha     Bravo    Charlie  Delta
-    Echo     Alpha    Bravo
+    key_1   key_2     key_3     key_1   key_2     key_3
+    Alpha   Bravo     Charlie   Juliet  Kilo      Lima
+    Delta   Echo      Foxtrot   Mike    November  Oscar
+    Golf    Hotel     India
     """
 
     assert output == expected
@@ -137,10 +137,10 @@ defmodule Tablet.CompactStyleTest do
 
     expected = """
                                   Multi-column Title
-    key_1    key_2    key_3    key_1    key_2    key_3    key_1    key_2    key_3
-    Charlie  Delta    Echo     Alpha    Bravo    Charl…   Delta    Echo     Alpha
-    Delta    Echo     Alpha    Bravo    Charlie  Delta
-    Echo     Alpha    Bravo    Charlie  Delta    Echo
+    key_1   key_2     key_3    key_1   key_2     key_3    key_1   key_2     key_3
+    Alpha   Bravo     Charl…   Juliet  Kilo      Lima     Sierra  Tango     Unifo…
+    Delta   Echo      Foxtr…   Mike    November  Oscar
+    Golf    Hotel     India    Papa    Quebec    Romeo
     """
 
     assert output == expected
@@ -155,14 +155,15 @@ defmodule Tablet.CompactStyleTest do
 
     expected = """
                Multi-line cells
-    key_1         key_2         key_3
-    A             Fruit emojis  こんにちは
-     three         🍎🍌🍒🌴🍇    Hello
-     line value
-    Fruit emojis  こんにちは    Single line
+    key_1         key_2       key_3
+    Single line   Two         A
+                   line        three
+                               line value
+    Fruit emojis  こんにちは  Single line
      🍎🍌🍒🌴🍇    Hello
-    こんにちは    Single line   Two
-     Hello                       line
+    Two           A           Fruit emojis
+     line          three       🍎🍌🍒🌴🍇
+                   line value
     """
 
     assert output == expected

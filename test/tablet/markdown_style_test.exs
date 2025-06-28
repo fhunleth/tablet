@@ -20,10 +20,10 @@ defmodule Tablet.MarkdownStyleTest do
 
     expected = [
       """
-      | key_1   | key_2 | key_3 |
-      | ------- | ----- | ----- |
-      | Charlie | Delta | Echo  |
-      | Delta   | Echo  | Alpha |
+      | key_1 | key_2 | key_3   |
+      | ----- | ----- | ------- |
+      | Alpha | Bravo | Charlie |
+      | Delta | Echo  | Foxtrot |
       """
     ]
 
@@ -41,10 +41,10 @@ defmodule Tablet.MarkdownStyleTest do
       """
       ## Title
 
-      | key_1   | key_2 | key_3 |
-      | ------- | ----- | ----- |
-      | Charlie | Delta | Echo  |
-      | Delta   | Echo  | Alpha |
+      | key_1 | key_2 | key_3   |
+      | ----- | ----- | ------- |
+      | Alpha | Bravo | Charlie |
+      | Delta | Echo  | Foxtrot |
       """
     ]
 
@@ -59,9 +59,9 @@ defmodule Tablet.MarkdownStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    | key_1   | key_2 | key_3 |
-    | ------- | ----- | ----- |
-    | Charlie | Delta | Echo  |
+    | key_1 | key_2 | key_3   |
+    | ----- | ----- | ------- |
+    | Alpha | Bravo | Charlie |
     """
 
     assert output == expected
@@ -77,9 +77,9 @@ defmodule Tablet.MarkdownStyleTest do
     expected = """
     | key_1   |
     | ------- |
+    | Alpha   |
+    | Bravo   |
     | Charlie |
-    | Delta   |
-    | Echo    |
     """
 
     assert output == expected
@@ -127,11 +127,11 @@ defmodule Tablet.MarkdownStyleTest do
       |> ansidata_to_string()
 
     expected = """
-    | key_1   | key_2   | key_3   | key_1   | key_2   | key_3   |
-    | ------- | ------- | ------- | ------- | ------- | ------- |
-    | Charlie | Delta   | Echo    | Alpha   | Bravo   | Charlie |
-    | Delta   | Echo    | Alpha   | Bravo   | Charlie | Delta   |
-    | Echo    | Alpha   | Bravo   |         |         |         |
+    | key_1  | key_2    | key_3   | key_1  | key_2    | key_3   |
+    | ------ | -------- | ------- | ------ | -------- | ------- |
+    | Alpha  | Bravo    | Charlie | Juliet | Kilo     | Lima    |
+    | Delta  | Echo     | Foxtrot | Mike   | November | Oscar   |
+    | Golf   | Hotel    | India   |        |          |         |
     """
 
     assert output == expected
@@ -147,11 +147,11 @@ defmodule Tablet.MarkdownStyleTest do
     expected = """
     ## Title
 
-    | key_1   | key_2   | key_3   | key_1   | key_2   | key_3   |
-    | ------- | ------- | ------- | ------- | ------- | ------- |
-    | Charlie | Delta   | Echo    | Alpha   | Bravo   | Charlie |
-    | Delta   | Echo    | Alpha   | Bravo   | Charlie | Delta   |
-    | Echo    | Alpha   | Bravo   |         |         |         |
+    | key_1  | key_2    | key_3   | key_1  | key_2    | key_3   |
+    | ------ | -------- | ------- | ------ | -------- | ------- |
+    | Alpha  | Bravo    | Charlie | Juliet | Kilo     | Lima    |
+    | Delta  | Echo     | Foxtrot | Mike   | November | Oscar   |
+    | Golf   | Hotel    | India   |        |          |         |
     """
 
     assert output == expected
@@ -173,11 +173,11 @@ defmodule Tablet.MarkdownStyleTest do
     expected = """
     ## Multi-column Title
 
-    | key_1   | key_2   | ke… | key_1   | key_2   | ke… | key_1   | key_2   | ke… |
-    | ------- | ------- | --- | ------- | ------- | --- | ------- | ------- | --- |
-    | Charlie | Delta   | Ec… | Alpha   | Bravo   | Ch… | Delta   | Echo    | Al… |
-    | Delta   | Echo    | Al… | Bravo   | Charlie | De… |         |         |     |
-    | Echo    | Alpha   | Br… | Charlie | Delta   | Ec… |         |         |     |
+    | key_1  | key_2    | ke… | key_1  | key_2    | ke… | key_1  | key_2    | ke… |
+    | ------ | -------- | --- | ------ | -------- | --- | ------ | -------- | --- |
+    | Alpha  | Bravo    | Ch… | Juliet | Kilo     | Li… | Sierra | Tango    | Un… |
+    | Delta  | Echo     | Fo… | Mike   | November | Os… |        |          |     |
+    | Golf   | Hotel    | In… | Papa   | Quebec   | Ro… |        |          |     |
     """
 
     assert output == expected
@@ -193,11 +193,11 @@ defmodule Tablet.MarkdownStyleTest do
     expected = """
     ## Multi-line cells
 
-    | key_1                      | key_2                      | key_3               |
-    | -------------------------- | -------------------------- | ------------------- |
-    | A<br>three<br>line value   | Fruit emojis<br>🍎🍌🍒🌴🍇 | こんにちは<br>Hello |
-    | Fruit emojis<br>🍎🍌🍒🌴🍇 | こんにちは<br>Hello        | Single line         |
-    | こんにちは<br>Hello        | Single line                | Two<br>line         |
+    | key_1                      | key_2                    | key_3                      |
+    | -------------------------- | ------------------------ | -------------------------- |
+    | Single line                | Two<br>line              | A<br>three<br>line value   |
+    | Fruit emojis<br>🍎🍌🍒🌴🍇 | こんにちは<br>Hello      | Single line                |
+    | Two<br>line                | A<br>three<br>line value | Fruit emojis<br>🍎🍌🍒🌴🍇 |
     """
 
     assert output == expected

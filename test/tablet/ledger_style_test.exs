@@ -21,19 +21,19 @@ defmodule Tablet.LedgerStyleTest do
     expected = [
       :light_blue_background,
       :black,
-      " key_1    key_2  key_3 ",
+      " key_1  key_2  key_3   ",
       :default_background,
       :default_color,
       "\n",
       :light_black_background,
       :white,
-      " Charlie  Delta  Echo  ",
+      " Alpha  Bravo  Charlie ",
       :default_background,
       :default_color,
       "\n",
       :white_background,
       :black,
-      " Delta    Echo   Alpha ",
+      " Delta  Echo   Foxtrot ",
       :default_background,
       :default_color,
       "\n"
@@ -58,19 +58,19 @@ defmodule Tablet.LedgerStyleTest do
       "\n",
       :light_blue_background,
       :black,
-      " key_1    key_2  key_3 ",
+      " key_1  key_2  key_3   ",
       :default_background,
       :default_color,
       "\n",
       :light_black_background,
       :white,
-      " Charlie  Delta  Echo  ",
+      " Alpha  Bravo  Charlie ",
       :default_background,
       :default_color,
       "\n",
       :white_background,
       :black,
-      " Delta    Echo   Alpha ",
+      " Delta  Echo   Foxtrot ",
       :default_background,
       :default_color,
       "\n"
@@ -87,8 +87,8 @@ defmodule Tablet.LedgerStyleTest do
       |> ansidata_to_string()
 
     expected = """
-     key_1    key_2  key_3
-     Charlie  Delta  Echo
+     key_1  key_2  key_3
+     Alpha  Bravo  Charlie
     """
 
     assert output == expected
@@ -103,9 +103,9 @@ defmodule Tablet.LedgerStyleTest do
 
     expected = """
      key_1
+     Alpha
+     Bravo
      Charlie
-     Delta
-     Echo
     """
 
     assert output == expected
@@ -137,10 +137,10 @@ defmodule Tablet.LedgerStyleTest do
       |> ansidata_to_string()
 
     expected = """
-     key_1    key_2    key_3     key_1    key_2    key_3
-     Charlie  Delta    Echo      Alpha    Bravo    Charlie
-     Delta    Echo     Alpha     Bravo    Charlie  Delta
-     Echo     Alpha    Bravo
+     key_1   key_2     key_3     key_1   key_2     key_3
+     Alpha   Bravo     Charlie   Juliet  Kilo      Lima
+     Delta   Echo      Foxtrot   Mike    November  Oscar
+     Golf    Hotel     India
     """
 
     assert output == expected
@@ -155,10 +155,10 @@ defmodule Tablet.LedgerStyleTest do
 
     expected = """
                              Title
-     key_1    key_2    key_3     key_1    key_2    key_3
-     Charlie  Delta    Echo      Alpha    Bravo    Charlie
-     Delta    Echo     Alpha     Bravo    Charlie  Delta
-     Echo     Alpha    Bravo
+     key_1   key_2     key_3     key_1   key_2     key_3
+     Alpha   Bravo     Charlie   Juliet  Kilo      Lima
+     Delta   Echo      Foxtrot   Mike    November  Oscar
+     Golf    Hotel     India
     """
 
     assert output == expected
@@ -179,10 +179,10 @@ defmodule Tablet.LedgerStyleTest do
 
     expected = """
                                    Multi-column Title
-     key_1    key_2    key_3    key_1    key_2    key_3    key_1    key_2    key_3
-     Charlie  Delta    Echo     Alpha    Bravo    Charl…   Delta    Echo     Alpha
-     Delta    Echo     Alpha    Bravo    Charlie  Delta
-     Echo     Alpha    Bravo    Charlie  Delta    Echo
+     key_1   key_2     key_3    key_1   key_2     key_3    key_1   key_2     key_3
+     Alpha   Bravo     Charl…   Juliet  Kilo      Lima     Sierra  Tango     Unifo…
+     Delta   Echo      Foxtr…   Mike    November  Oscar
+     Golf    Hotel     India    Papa    Quebec    Romeo
     """
 
     assert output == expected
@@ -198,14 +198,15 @@ defmodule Tablet.LedgerStyleTest do
     # This looks way better with color
     expected = """
                 Multi-line cells
-     key_1         key_2         key_3
-     A             Fruit emojis  こんにちは
-     three         🍎🍌🍒🌴🍇    Hello
-     line value
-     Fruit emojis  こんにちは    Single line
+     key_1         key_2       key_3
+     Single line   Two         A
+                   line        three
+                               line value
+     Fruit emojis  こんにちは  Single line
      🍎🍌🍒🌴🍇    Hello
-     こんにちは    Single line   Two
-     Hello                       line
+     Two           A           Fruit emojis
+     line          three       🍎🍌🍒🌴🍇
+                   line value
     """
 
     assert output == expected
