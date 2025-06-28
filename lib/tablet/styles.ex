@@ -142,7 +142,7 @@ defmodule Tablet.Styles do
   @spec box(Tablet.t()) :: Tablet.t()
   def box(table) do
     border = %{
-      h: "─",
+      h: "-",
       v: "|",
       ul: "+",
       uc: "+",
