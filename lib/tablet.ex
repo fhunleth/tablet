@@ -312,7 +312,7 @@ defmodule Tablet do
 
   * `:column_widths` - a map of keys to their desired column widths. See `t:column_width/0`.
   * `:data` - tabular data
-  * `:default_column_width` - default column width in characters
+  * `:default_column_width` - default column width in characters or `:expand` or `:minimum`. Defaults to `:minimum`.
   * `:formatter` - if passing non-ansidata, supply a function to apply custom formatting
   * `:keys` - a list of keys to include in the table for each record. The order is reflected in the rendered table. Optional
   * `:name` - the name or table title. This can be any `t:IO.ANSI.ansidata/0` value. Not used by default style.
