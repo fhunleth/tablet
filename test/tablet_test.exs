@@ -481,6 +481,10 @@ defmodule TabletTest do
       assert Tablet.visual_size("Hello\nWorld") == {5, 2}
       assert Tablet.visual_size("Hello\nJosé") == {5, 2}
       assert Tablet.visual_size("😀 👻\n😀 👻 🐭") == {8, 2}
+
+      # New lines count even if line is blank
+      assert Tablet.visual_size("Hello\n") == {5, 2}
+      assert Tablet.visual_size("Hello\n\n") == {5, 3}
     end
 
     test "multiple lines with ansi data" do
