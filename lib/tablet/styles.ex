@@ -54,7 +54,7 @@ defmodule Tablet.Styles do
 
   defp compact_title(table) do
     w = interior_width(table, 0, 2, 3)
-    [Tablet.fit(table.name, {w, 1}, :center), "\n"]
+    [Tablet.fit({table.name, justification: :center}, {w, 1}), "\n"]
   end
 
   defp compact_header(_table, header) do
@@ -245,7 +245,7 @@ defmodule Tablet.Styles do
 
     [
       [border.ul, String.duplicate(border.h, w), border.ur, "\n"],
-      [border.v, Tablet.fit(table.name, {w, 1}, :center), border.v, "\n"],
+      [border.v, Tablet.fit({table.name, justification: :center}, {w, 1}), border.v, "\n"],
       generic_box_border(table, content, border.l, border.uc, border.r, border.h)
     ]
   end
@@ -333,7 +333,7 @@ defmodule Tablet.Styles do
     w = interior_width(table, 2, 0, 1)
 
     [
-      Tablet.fit(table.name, {w, 1}, :center),
+      Tablet.fit({table.name, justification: :center}, {w, 1}),
       :default_background,
       :default_color,
       "\n",

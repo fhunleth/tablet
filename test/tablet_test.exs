@@ -433,6 +433,32 @@ defmodule TabletTest do
     end
   end
 
+  test "formatter that returns justification options" do
+    data = [%{"id" => 1, "name" => "Puck"}, %{"id" => 2, "name" => "Nick Bottom"}]
+
+    formatter = fn
+      :__header__, key -> {:ok, {key, justification: :center}}
+      "id", value -> {:ok, {to_string(value), justification: :right}}
+      "name", value -> {:ok, {value, justification: :left}}
+    end
+
+    output =
+      Tablet.render(data, formatter: formatter, style: :box)
+      |> ansidata_to_string()
+
+    expected = """
+    +----+-------------+
+    | id |    name     |
+    +----+-------------+
+    |  1 | Puck        |
+    +----+-------------+
+    |  2 | Nick Bottom |
+    +----+-------------+
+    """
+
+    assert output == expected
+  end
+
   test "simplify/1" do
     assert Tablet.simplify("hello") == ["hello"]
     assert Tablet.simplify(["hello", " world"]) == ["hello world"]
@@ -493,7 +519,8 @@ defmodule TabletTest do
   end
 
   defp fit(ansidata, size, justification) when is_tuple(size) do
-    Tablet.fit(ansidata, size, justification) |> Enum.map(&Tablet.simplify/1)
+    s = {ansidata, justification: justification}
+    Tablet.fit(s, size) |> Enum.map(&Tablet.simplify/1)
   end
 
   describe "fit/3" do

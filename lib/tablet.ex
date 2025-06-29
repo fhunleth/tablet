@@ -210,19 +210,35 @@ defmodule Tablet do
   @type line_renderer() :: (t(), line_context(), [IO.ANSI.ansidata()] -> IO.ANSI.ansidata())
 
   @typedoc """
+  Justification for padding ansidata
+  """
+  @type justification() :: :left | :right | :center
+
+  @typedoc """
+  Options for fitting text into cells
+
+  * `:justification` - horizontal text justification. Defaults to `:left`.
+  """
+  @type fit_options() :: [justification: justification()]
+
+  @typedoc """
   Data formatter callback function
 
   This function is used for conversion of tabular data to `t:IO.ANSI.ansidata/0`.
   The special key `:__header__` is passed when formatting the column titles.
 
-  The callback should return `{:ok, ansidata}` or `:default`.
-  """
-  @type formatter() :: (key(), any() -> {:ok, IO.ANSI.ansidata()} | :default)
+  The callback should return one of the following:
 
-  @typedoc """
-  Justification for padding ansidata
+  * `:default` - use Tablet's default formatting
+  * `{:ok, ansidata}` - return the formatted data as `t:IO.ANSI.ansidata/0`
+  * `{:ok, {ansidata, fit_options()}}` - return the formatted data and how the text should be fit into its cell
+
+  If needing compatibility with `Kino.DataTable`, then be sure to only return
+  either `:default` or `{:ok, t:String.t/0}`.
   """
-  @type justification() :: :left | :right | :center
+  @type formatter() :: (key(), any() ->
+                          {:ok, IO.ANSI.ansidata() | {IO.ANSI.ansidata(), fit_options()}}
+                          | :default)
 
   @typedoc """
   Table renderer state
@@ -485,7 +501,7 @@ defmodule Tablet do
       |> Enum.map(fn c ->
         s = format(table, :__header__, c)
         width = table.column_widths[c]
-        Tablet.fit(s, {width, 1}, :left)
+        Tablet.fit(s, {width, 1})
       end)
       |> List.duplicate(table.wrap_across)
 
@@ -532,7 +548,7 @@ defmodule Tablet do
     |> Enum.map(fn row ->
       Enum.map(row, fn {c, v} ->
         width = table.column_widths[c]
-        Tablet.fit(v, {width, height}, :left)
+        Tablet.fit(v, {width, height})
       end)
     end)
   end
@@ -541,7 +557,7 @@ defmodule Tablet do
   defp group_multi_column(data, %{wrap_across: 1} = _table), do: Enum.map(data, &[&1])
 
   defp group_multi_column(data, %{wrap_direction: :horizontal} = table) do
-    empty_row = for c <- table.keys, do: {c, []}
+    empty_row = for c <- table.keys, do: {c, {"", []}}
 
     data
     |> Enum.chunk_every(table.wrap_across, table.wrap_across, Stream.cycle([empty_row]))
@@ -549,7 +565,7 @@ defmodule Tablet do
 
   defp group_multi_column(data, table) do
     count = ceil(length(data) / table.wrap_across)
-    empty_row = for c <- table.keys, do: {c, []}
+    empty_row = for c <- table.keys, do: {c, {"", []}}
 
     data
     |> Enum.chunk_every(count, count, Stream.cycle([empty_row]))
@@ -561,14 +577,17 @@ defmodule Tablet do
   def always_default_formatter(_key, _data), do: :default
 
   @doc false
-  @spec format(t(), key(), any()) :: IO.ANSI.ansidata()
+  @spec format(t(), key(), any()) :: {IO.ANSI.ansidata(), fit_options()}
   def format(table, key, data) do
     case table.formatter.(key, data) do
       {:ok, ansidata} when is_list(ansidata) or is_binary(ansidata) ->
-        ansidata
+        {ansidata, []}
+
+      {:ok, {ansidata, opts}} when (is_list(ansidata) or is_binary(ansidata)) and is_list(opts) ->
+        {ansidata, opts}
 
       :default ->
-        default_format(key, data)
+        {default_format(key, data), []}
 
       other ->
         raise ArgumentError,
@@ -595,10 +614,12 @@ defmodule Tablet do
 
   This function is useful for styling output to fit data into a cell.
   """
-  @spec fit(IO.ANSI.ansidata(), {pos_integer(), pos_integer()}, justification()) ::
+  @spec fit({IO.ANSI.ansidata(), fit_options()}, {pos_integer(), pos_integer()}) ::
           IO.ANSI.ansidata()
-  def fit(ansidata, {w, h}, justification)
-      when is_integer(w) and w >= 0 and is_integer(h) and h > 0 do
+  def fit({ansidata, opts}, {w, h})
+      when is_integer(w) and w >= 0 and is_integer(h) and h > 0 and is_list(opts) do
+    justification = Keyword.get(opts, :justification, :left)
+
     # simplify/1 is called here to both flatten the ansidata and to turn all
     # Erlang strings into binaries. Subsequent functions assume flat lists and
     # `truncate/3` doesn't handle Erlang strings.
@@ -803,14 +824,25 @@ defmodule Tablet do
   iex> Tablet.visual_size(ansidata)
   {13, 1}
   ```
+
+  For convenience, fit options can be passed even though they currently
+  don't affect the size calculation.
+  ```
+  iex> string = "Multi-\\nline"
+  iex> Tablet.visual_size({string, justification: :center})
+  {6, 2}
+  ```
   """
-  @spec visual_size(IO.ANSI.ansidata()) :: {non_neg_integer(), pos_integer()}
-  def visual_size(ansidata) when is_binary(ansidata) or is_list(ansidata) do
+  @spec visual_size({IO.ANSI.ansidata(), fit_options()} | IO.ANSI.ansidata()) ::
+          {non_neg_integer(), pos_integer()}
+  def visual_size({ansidata, _opts}) when is_binary(ansidata) or is_list(ansidata) do
     IO.ANSI.format(ansidata, false)
     |> IO.chardata_to_string()
     |> String.graphemes()
     |> measure(0, 0, 1)
   end
+
+  def visual_size(ansidata), do: visual_size({ansidata, []})
 
   defp visual_width(ansidata) do
     {width, _height} = visual_size(ansidata)
