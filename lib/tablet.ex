@@ -721,15 +721,18 @@ defmodule Tablet do
   defp merge_ansi(state, other), do: Map.update(state, :other, [other], &[other | &1])
 
   # Returns reverse order to apply for supporting "other" codes. Also see caller.
-  defp resume_ansi_r(state), do: state |> Map.values() |> Enum.concat()
+  defp resume_ansi_r(state), do: state |> deterministic_map_values() |> Enum.concat()
 
-  defp pause_ansi(state), do: state |> Map.keys() |> Enum.map(&pause_atom/1)
+  defp pause_ansi(state), do: state |> deterministic_map_keys() |> Enum.map(&pause_atom/1)
 
   defp pause_atom(:color), do: :default_color
   defp pause_atom(:background), do: :default_background
   defp pause_atom(:italic), do: :not_italic
   defp pause_atom(:underline), do: :no_underline
   defp pause_atom(_other), do: :reset
+
+  defp deterministic_map_keys(m), do: m |> Map.keys() |> Enum.sort()
+  defp deterministic_map_values(m), do: m |> Enum.sort() |> Enum.map(&elem(&1, 1))
 
   # Truncate flattened ansidata and add ellipsis if needed
   defp truncate([], len, acc), do: {Enum.reverse(acc), len}

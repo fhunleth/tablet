@@ -627,8 +627,8 @@ defmodule TabletTest do
       expected =
         [
           [:red, "line1", :default_color],
-          [:red, :green, "lin", :blue_background, "e2", :default_color, :default_background],
-          [:blue_background, :green, "line3", :default_background, :default_color],
+          [:red, :green, "lin", :blue_background, "e2", :default_background, :default_color],
+          [:green, :blue_background, "line3", :default_background, :default_color],
           [:green, "line4"]
         ]
 
