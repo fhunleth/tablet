@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.2
+
+* Changes
+  * Allow Elixir 1.13 and later to be used. These worked but hadn't been
+    allowed. Support will likely be dropped, but for now, they prevent some CI
+    builds from breaking.
+  * Remove hardcoded justification; allow per-cell
+  * Support horizontal layout in multicolumn mode by specifying `wrap_direction:
+    :horizontal`. The default is still top-to-bottom and left-to-right.
+
 ## v0.3.1
 
 * Changes
