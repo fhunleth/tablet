@@ -9,7 +9,7 @@ defmodule Tablet.MixProject do
     [
       app: :tablet,
       version: @version,
-      elixir: "~> 1.16",
+      elixir: "~> 1.13",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: @description,
       package: package(),
