@@ -316,6 +316,15 @@ defmodule TabletTest do
     assert output == expected
   end
 
+  test "zero-width columns terminate and render as empty cells" do
+    data = [%{a: "hello", b: "world"}]
+
+    assert Tablet.render(data, default_column_width: 0) |> ansidata_to_string() == "\n\n"
+
+    assert Tablet.render(data, column_widths: %{a: 0, b: 0}) |> ansidata_to_string() ==
+             "\n\n"
+  end
+
   test "fixed height rows" do
     data = generate_table(3, 5)
 

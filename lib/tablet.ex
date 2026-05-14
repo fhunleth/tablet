@@ -471,7 +471,7 @@ defmodule Tablet do
      end)}
   end
 
-  defp update_column_width_pass_1(_table, key, w) when is_integer(w) and w >= 1, do: {key, w}
+  defp update_column_width_pass_1(_table, key, w) when is_integer(w) and w >= 0, do: {key, w}
   defp update_column_width_pass_1(_table, key, :expand), do: {key, :expand}
 
   defp update_column_width_pass_1(table, key, _),
