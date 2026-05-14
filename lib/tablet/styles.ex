@@ -194,7 +194,7 @@ defmodule Tablet.Styles do
   also call this directly by passing `style: :generic_box` and `style_options: [border: ...]`.
 
   Options:
-  * `:border` - a map with the  following fields:
+  * `:border` - a map with the following fields:
     * `:h` and `:v` - the horizontal and vertical characters
     * `:ul` and `:ur` - upper left and upper right corners
     * `:uc` - intersection of the horizontal top border with a vertical (looks like a T)

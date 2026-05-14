@@ -6,8 +6,8 @@ defmodule Tablet do
   @moduledoc """
   A tiny tabular data renderer
 
-  This module renders tabular data as text for output to the console or any
-  where else. Give it data in either of the following common tabular data
+  This module renders tabular data as text for output to the console or
+  anywhere else. Give it data in either of the following common tabular data
   shapes:
 
   ```
@@ -88,7 +88,7 @@ defmodule Tablet do
   `t:IO.ANSI.ansidata/0`. This may not be what you want. To customize this,
   pass a 2-arity function using the `:formatter` option. That function takes
   the key and value as arguments and should return `{:ok, ansidata}`. The
-  special key `:__header__` is passed when constructing header row. Return
+  special key `:__header__` is passed when constructing the header row. Return
   `:default` to use the default conversion.
 
   ## Styling
@@ -111,7 +111,7 @@ defmodule Tablet do
   print and intermix atoms like `:red` or `:blue` to indicate where ANSI escape
   sequences should be inserted if supported. Tablet actually doesn't know what
   any of the atoms means and passes them through. Elixir's `IO.ANSI` module
-  does all of the work. If fact, if you find `IO.ANSI` too limited, then you
+  does all of the work. In fact, if you find `IO.ANSI` too limited, then you
   could use an alternative like [bunt](https://hex.pm/packages/bunt) and
   include atoms like `:chartreuse` which its formatter will understand.
   """
@@ -198,11 +198,11 @@ defmodule Tablet do
   parameter.
 
   The return value is always `t:IO.ANSI.ansidata/0`. It should contain a final
-  new line since `Tablet` doesn't add anything.  Multiple lines can be returned
+  newline since `Tablet` doesn't add anything. Multiple lines can be returned
   if borders or more room for text is needed.
 
-  When writing styling functions, it's recommended to pattern matching on the
-  context.  Most of the time, you'll just need to know whether you're in the
+  When writing styling functions, it's recommended to pattern match on the
+  context. Most of the time, you'll just need to know whether you're in the
   `:header` section or dealing with data rows. The context contains enough
   information to do more complicated things like match on even or odd lines and
   more if needed.

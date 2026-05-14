@@ -6,8 +6,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/fhunleth/tablet/badge.svg)](https://coveralls.io/github/fhunleth/tablet)
 [![REUSE status](https://api.reuse.software/badge/github.com/fhunleth/tablet)](https://api.reuse.software/info/github.com/fhunleth/tablet)
 
-Tablet renders tabular data as text for output to the console or any
-where else. Give it data in either of the following common tabular data
+Tablet renders tabular data as text for output to the console or
+anywhere else. Give it data in either of the following common tabular data
 shapes:
 
 ```elixir
@@ -91,13 +91,13 @@ Tablet naively converts data values and constructs column headers to
 `t:IO.ANSI.ansidata/0`. This may not be what you want. To customize this,
 pass a 2-arity function using the `:formatter` option. That function takes
 the key and value as arguments and should return `{:ok, ansidata}`. The special key
-`:__header__` is passed when constructing header row. Return `:default`
+`:__header__` is passed when constructing the header row. Return `:default`
 to use the default conversion.
 
 ## Styling
 
 Various table output styles are supported by passing an atom or 1-arity
-function to the  `:style` parameter.
+function to the `:style` parameter.
 
 See the [Style Gallery](gallery.md) for the built-in styles.
 
