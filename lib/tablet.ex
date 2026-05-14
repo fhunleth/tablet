@@ -93,11 +93,17 @@ defmodule Tablet do
 
   ## Styling
 
-  Various table output styles are supported by supplying a `:style` function.
-  The following are included:
+  Pass an atom or a 1-arity function as the `:style` option. The built-in
+  styles are:
 
-  * `compact/3` - a minimal table style with underlined headers (default)
-  * `markdown/3` - GitHub-flavored markdown table style
+  * `:compact` - minimal output with underlined headers (default)
+  * `:markdown` - GitHub-flavored markdown table
+  * `:box` - bordered table using ASCII characters
+  * `:unicode_box` - bordered table using Unicode box-drawing characters
+  * `:ledger` - rows alternate background colors
+  * `:generic_box` - bordered table with caller-supplied border characters
+
+  See `Tablet.Styles` and the [Style Gallery](gallery.md) for details.
 
   ## Ansidata
 
