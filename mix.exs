@@ -3,7 +3,7 @@
 defmodule Tablet.MixProject do
   use Mix.Project
 
-  @version "0.3.2"
+  @version "0.3.3"
   @description "A tiny tabular table renderer"
   @source_url "https://github.com/fhunleth/tablet"
 

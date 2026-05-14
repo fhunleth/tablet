@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.3
+
+* Changes
+  * Fix infinite recursion on a zero-width cell
+
 ## v0.3.2
 
 * Changes
