@@ -1,7 +1,7 @@
 # Tablet
 
 [![Hex version](https://img.shields.io/hexpm/v/tablet.svg "Hex version")](https://hex.pm/packages/tablet)
-[![API docs](https://img.shields.io/hexpm/v/tablet.svg?label=hexdocs "API docs")](https://hexdocs.pm/tablet/Tablet.html)
+[![API docs](https://img.shields.io/hexpm/v/tablet.svg?label=hexdocs "API docs")](https://tablet.hexdocs.pm/Tablet.html)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/fhunleth/tablet/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/fhunleth/tablet/tree/main)
 [![Coverage Status](https://coveralls.io/repos/github/fhunleth/tablet/badge.svg)](https://coveralls.io/github/fhunleth/tablet)
 [![REUSE status](https://api.reuse.software/badge/github.com/fhunleth/tablet)](https://api.reuse.software/info/github.com/fhunleth/tablet)
@@ -38,12 +38,12 @@ fancier tables with colors, borders and more.
 
 Here are some of Tablet's features:
 
-* [`Kino.DataTable`](https://hexdocs.pm/kino/Kino.DataTable.html)-inspired API for ease of switching between Livebook and console output
+* [`Kino.DataTable`](https://kino.hexdocs.pm/Kino.DataTable.html)-inspired API for ease of switching between Livebook and console output
 * Small. No runtime dependencies. Intentionally minimal feature scope.
 * Emoji and CJK character width calculations w/o external dependencies
 * Multi-column wrapping for tables with many rows and few columns
 * Built-in [styles](gallery.md) and optional callback interface for customization
-* Supports [`IO.ANSI.ansidata`](https://hexdocs.pm/elixir/IO.ANSI.html#format/1) throughout for color, italics, and more in cells and styling
+* Supports [`IO.ANSI.ansidata`](https://elixir.hexdocs.pm/IO.ANSI.html#format/1) throughout for color, italics, and more in cells and styling
 * Supports [`usage_rules`](https://hex.pm/packages/usage_rules) for helping LLMs make beautiful tables
 
 [![Run in Livebook](https://livebook.dev/badge/v1/pink.svg)](https://livebook.dev/run?url=https%3A%2F%2Fgithub.com%2Ffhunleth%2Ftablet%2Fblob%2Fmain%2Fnotebooks%2Ftablet.livemd)
